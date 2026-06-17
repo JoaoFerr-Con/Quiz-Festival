@@ -982,7 +982,7 @@ body.golden{background:var(--gold-bg)}
     <form id="cadastro-form" class="cadastro-form" autocomplete="off">
       <div class="field-wrap">
         <label for="input-nome">Nome completo</label>
-        <input id="input-nome" type="text" required>
+        <input id="input-nome" type="text" placeholder="Ex: Maria da Silva" maxlength="60" required>
       </div>
       <div class="field-wrap">
         <label for="input-cpf">CPF</label>
@@ -1178,39 +1178,42 @@ body.golden{background:var(--gold-bg)}
 
 <script>
 
-const SUPABASE_URL      = 'https://zbwjqcpssvariihoivqj.supabase.co/rest/v1/';       
+
+const SUPABASE_URL      = 'https://zbwjqcpssvariihoivqj.supabase.co/rest/v1/';   
 const SUPABASE_ANON_KEY = 'sb_publishable_DtqpRX1T03L8_-i1ATCp6Q_9OOfW3Y_'; 
 
 let _supabase = null;
 function getSupabase(){
   if(_supabase) return _supabase;
   try{
-    // Verifica se as credenciais foram configuradas
     if(SUPABASE_URL.includes('COLE_') || SUPABASE_ANON_KEY.includes('COLE_')){
-      console.warn('[Quiz] Supabase não configurado. Dados não serão salvos remotamente.');
+      console.warn('[Quiz] Banco de Dados não configurado. Dados não serão salvos.');
       return null;
     }
     _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     return _supabase;
   }catch(e){
-    console.error('[Quiz] Erro ao inicializar Supabase:', e);
+    console.error('[Quiz] Erro ao inicializar Banco de Dados:', e);
     return null;
   }
 }
+
+// ── Registrar participante ao iniciar o quiz pela primeira vez  
 
 async function registrarParticipante(cadastro){
   const sb = getSupabase();
   if(!sb){ console.log('[Quiz] Cadastro local (sem Supabase):', cadastro); return; }
   try{
     const { error } = await sb.from('participantes').insert({
-      nome:      cadastro.nome,
-      cpf:       cadastro.cpf,           
-      cidade:    cadastro.cidade,
-      criado_em: cadastro.timestamp,
-      xp:        0,
-      acertos:   0,
-      patente:   '',
-      completou: false
+      nome:        cadastro.nome,
+      cpf:         cadastro.cpf,
+      cidade:      cadastro.cidade,
+      criado_em:   cadastro.timestamp,
+      xp:          0,
+      acertos:     0,
+      patente:     '',
+      completou:   false,
+      tempo_medio: 0   
     });
     if(error) console.error('[Quiz] Erro ao registrar participante:', error.message);
     else       console.log('[Quiz] Participante registrado no Supabase.');
@@ -1219,20 +1222,63 @@ async function registrarParticipante(cadastro){
   }
 }
 
-// ── Atualizar resultado final ao terminar o quiz ─────────────────────────
+// ── Atualizar resultado final ao terminar o quiz 
 async function salvarResultado(cadastro, xp, acertos, patente, completou){
   const sb = getSupabase();
   if(!sb) return;
   try{
-    const { error } = await sb.from('participantes')
-      .update({ xp, acertos, patente, completou })
+    const respostas = state.answersLog.filter(l => !l.isFree && l.timeLeft !== undefined);
+    const tempoMedio = respostas.length > 0
+      ? Math.round(respostas.reduce((s,l) => s + (30 - l.timeLeft), 0) / respostas.length)
+      : 30;
+
+    const { data, error: fetchErr } = await sb
+      .from('participantes')
+      .select('id')
       .eq('cpf', cadastro.cpf)
-      .order('criado_em', {ascending:false})
+      .order('criado_em', {ascending: false})
       .limit(1);
+
+    if(fetchErr){ console.error('[Quiz] Erro ao buscar participante:', fetchErr.message); return; }
+    if(!data || data.length === 0){ console.warn('[Quiz] Participante não encontrado para update'); return; }
+
+    const { error } = await sb.from('participantes')
+      .update({ xp, acertos, patente, completou, tempo_medio: tempoMedio })
+      .eq('id', data[0].id);
+
     if(error) console.error('[Quiz] Erro ao salvar resultado:', error.message);
-    else       console.log('[Quiz] Resultado salvo:', {xp, acertos, patente, completou});
+    else       console.log('[Quiz] Resultado salvo:', {xp, acertos, patente, completou, tempoMedio});
   }catch(e){
     console.error('[Quiz] Falha de rede ao salvar resultado:', e);
+  }
+}
+
+// ── Buscar ranking real do Banco de Dados 
+// Critério principal: maior XP. Desempate: menor tempo_medio de resposta.
+async function buscarRanking(){
+  const sb = getSupabase();
+  if(!sb){
+    return [{ nome: state.nick, xp: state.xp, patente: getPatente(state.correct).title, isMe: true }];
+  }
+  try{
+    const { data, error } = await sb
+      .from('participantes')
+      .select('nome, xp, patente, tempo_medio')
+      .order('xp', { ascending: false })
+      .order('tempo_medio', { ascending: true }) 
+      .limit(10);
+
+    if(error){ console.error('[Quiz] Erro ao buscar ranking:', error.message); return []; }
+
+    return (data || []).map(p => ({
+      nome: p.nome,
+      xp:   p.xp,
+      patente: p.patente,
+      isMe: p.nome === state.nick && p.xp === state.xp
+    }));
+  }catch(e){
+    console.error('[Quiz] Falha de rede ao buscar ranking:', e);
+    return [];
   }
 }
 
@@ -1250,9 +1296,9 @@ const BLOCKS_META = [
    grad:'linear-gradient(135deg,#00E5FF,#8A2BE2)',free:true,mult:1.2},
 ];
 
-// Todas as perguntas em sequência linear
+
 const ALL_QUESTIONS = [
-  // ─── BLOCO 1 ───────────────────────────────────────────
+  // ─── BLOCO 1 
   {block:0,emoji:'🍍',q:'Qual é o principal produto agrícola homenageado pelo Festival do Abacaxi?',
    opts:['Açaí','Mandioca','Abacaxi','Cupuaçu'],ans:2,
    info:'O abacaxi é o fruto símbolo de Barcarena! A cidade é carinhosamente chamada de <strong>"Terra do Abacaxi"</strong> e cerca de 10.000 famílias vivem de sua produção, com uma safra de aproximadamente 700 mil frutos por ano.'},
@@ -1265,7 +1311,7 @@ const ALL_QUESTIONS = [
   {block:0,emoji:'📜',q:'Em que ano o Festival do Abacaxi foi tombado como Patrimônio Cultural Artístico do Pará?',
    opts:['2005','2009','2012','2015'],ans:1,
    info:'Em <strong>17 de novembro de 2009</strong>, pela Lei Estadual nº 7.336, o Festival do Abacaxi foi formalmente reconhecido como Patrimônio Cultural Artístico do Estado do Pará.'},
-  // ─── BLOCO 2 ───────────────────────────────────────────
+  // ─── BLOCO 2 
   {block:1,emoji:'🗺️',q:'Qual destes distritos pertence ao município de Barcarena?',
    opts:['Murinim','Vila dos Cabanos','Icoaraci','Quatro Bocas'],ans:1,
    info:'<strong>Vila dos Cabanos</strong> é um importante distrito de Barcarena, surgido junto ao Distrito Industrial e à instalação das grandes empresas de alumínio na região.'},
@@ -1278,7 +1324,7 @@ const ALL_QUESTIONS = [
   {block:1,emoji:'🎭',q:'Qual concurso de beleza faz parte da programação oficial do Festival do Abacaxi?',
    opts:['Miss Amazônia','Princesa do Cafezal','Rainha do Festival do Abacaxi','Embaixatriz da Colheita'],ans:2,
    info:'O concurso <strong>"Rainha do Festival do Abacaxi"</strong> é uma das tradições mais aguardadas, com candidatas de toda a região de Barcarena disputando o título durante as festividades.'},
-  // ─── BLOCO 3 ───────────────────────────────────────────
+  // ─── BLOCO 3 
   {block:2,emoji:'📈',q:'Nos últimos anos, Barcarena ampliou seus investimentos em qual área?',
    opts:['Educação','Exploração espacial','Ferrovia internacional','Produção de petróleo'],ans:0,
    info:'Entre 2021 e 2026, a Prefeitura realizou <strong>investimentos históricos na rede municipal de ensino</strong>, incluindo novas escolas, reformas e ampliação de vagas para crianças e jovens de Barcarena.'},
@@ -1291,7 +1337,7 @@ const ALL_QUESTIONS = [
   {block:2,emoji:'🌿',q:'Qual empresa multinacional em Barcarena apoia projetos de desenvolvimento sustentável local?',
    opts:['Vale','Hydro','Petrobras','Embraer'],ans:1,
    info:'A <strong>Hydro</strong>, empresa norueguesa de alumínio, apoia a Iniciativa Barcarena Sustentável (IBS), com projetos de geração de renda, artesanato, gastronomia e fortalecimento cultural.'},
-  // ─── BLOCO 4 (livre — sem resposta errada) ─────────────
+  // ─── BLOCO 4 (livre — sem resposta errada)
   {block:3,emoji:'🔮',q:'Qual tema você considera mais importante para o futuro de Barcarena?',
    opts:['Emprego e renda','Educação','Saúde','Infraestrutura'],ans:-1,
    info:'Esta é uma <strong>pergunta participativa</strong>! Todas as respostas são válidas. Sua opinião contribui para que os organizadores compreendam as prioridades da comunidade barcarenense.'},
@@ -1317,20 +1363,18 @@ const ACHIEVEMENTS = [
 
 // Patentes baseadas em ACERTOS (excluindo perguntas livres do bloco 4)
 const PATENTES = [
-  {minAcertos:16,maxAcertos:20,emoji:'🏆',title:'Mestre do Festival',
+  {minAcertos:10,maxAcertos:12,emoji:'🏆',title:'Mestre do Festival',
    sub:'Você domina Barcarena de ponta a ponta! Parabéns!',cor:'rgba(255,193,7,0.15)'},
-  {minAcertos:11,maxAcertos:15,emoji:'🏅',title:'Orgulho de Barcarena',
+  {minAcertos:7, maxAcertos:9, emoji:'🏅',title:'Orgulho de Barcarena',
    sub:'Impressionante domínio cultural! Barcarena se orgulha de você.',cor:'rgba(138,43,226,0.12)'},
-  {minAcertos:6, maxAcertos:10,emoji:'🌿',title:'Embaixador do Abacaxi',
+  {minAcertos:4, maxAcertos:6, emoji:'🌿',title:'Embaixador do Abacaxi',
    sub:'Você conhece bem o festival! Continue descobrindo nossa cidade.',cor:'rgba(0,200,83,0.10)'},
-  {minAcertos:0, maxAcertos:5, emoji:'🌱',title:'Amigo do Festival',
+  {minAcertos:0, maxAcertos:3, emoji:'🌱',title:'Amigo do Festival',
    sub:'Bem-vindo à jornada! Continue aprendendo sobre Barcarena.',cor:'rgba(0,229,255,0.08)'},
 ];
 
-const FAKE_LB=[
-  {name:'Dona Margarida',xp:480},{name:'Zé do Abacaxi',xp:420},
-  {name:'Marinês Cultura',xp:310},{name:'Turista Curioso',xp:190},
-];
+// Ranking vem do Banco de Dados, ordenado por XP e tempo médio de resposta
+// Cada item: {nome, xp, patente, isMe}
 
 const REINFORCE_CORRECT=['Correto! 🎯','Isso aí! ✨','Manda ver! 🔥','Arrasou! 💥','Sensacional! 🌟','Que memória! 🧠'];
 const REINFORCE_STREAK={2:'Sequência! 🔥',3:'Tá em chamas! 🔥🔥',4:'IMPARÁVEL! 🔥🔥🔥'};
@@ -1338,15 +1382,8 @@ const REINFORCE_SPEED=['Que velocidade! ⚡','Relâmpago! ⚡','Super rápido! �
 const REINFORCE_WRONG=['Quase! Confira a curiosidade 📚','Não dessa vez 🤔','Aprenda e vai na frente! 💪'];
 const REINFORCE_FREE=['Obrigado por participar! 🙏','Sua opinião conta muito! 🗳️','Barcarena te escuta! 💚'];
 
-// ═══════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════
 let state={
   qIdx:0, nick:'Você',
-  // ── Dados de cadastro — prontos para envio a uma API/DB futuramente ──
-  // Estrutura sugerida de payload:
-  // { nome: string, cpf: string, cidade: string, timestamp: ISOString,
-  //   xp: number, correct: number, patente: string }
   cadastro:{ nome:'', cpf:'', cidade:'' },
   xp:0, streak:0, maxStreak:0, correct:0, fastAns:0,
   timer:null, timeLeft:15, answered:false,
@@ -1355,20 +1392,15 @@ let state={
   shuffledAt5:false,
   pendingSabiaInfo:null,
   pendingNext:null,
-  // ── Block gating ──────────────────────────────────
-  blockCorrects:[0,0,0,0],  // acertos por bloco (índice 0..3)
-  block4IntroShown:false,    // tela de transição do bloco 4 já exibida?
-  completedGame:false,       // jogador completou todos os blocos com sucesso?
+  blockCorrects:[0,0,0,0],  
+  block4IntroShown:false,    
+  completedGame:false,      
 };
 
-// ═══════════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════════
+
 const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
 function getPatente(correct){return PATENTES.find(p=>correct>=p.minAcertos);}
 function getBlockMeta(blockIdx){return BLOCKS_META[blockIdx];}
-
-// showScreen redefined below with footer logic
 function toast(text,type=''){
   const el=document.createElement('div');
   el.className='toast-item'+(type?' toast-'+type:'');
@@ -1378,9 +1410,6 @@ function toast(text,type=''){
 }
 function haptic(p){if(navigator.vibrate)navigator.vibrate(p)}
 
-// ═══════════════════════════════════════════════════════
-//  WEB AUDIO — AudioContext desbloqueado só após 1ª interação
-// ═══════════════════════════════════════════════════════
 let audioCtx=null;
 let audioUnlocked=false;
 
@@ -1388,7 +1417,6 @@ function unlockAudio(){
   if(audioUnlocked)return;
   try{
     audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    // Resume imediato para Safari iOS que precisa de gesture
     if(audioCtx.state==='suspended') audioCtx.resume();
     audioUnlocked=true;
   }catch(e){}
@@ -1405,8 +1433,6 @@ function playSound(type){
   try{
     const ctx=getAudio();const g=ctx.createGain();g.connect(ctx.destination);
     if(type==='correct'){
-      // ── Item 1: Arpejo festivo expansivo — C4→C6 em 7 notas, 320ms total ──
-      // Começa grave, sobe, termina com dois pings brilhantes (sensação de foguete)
       const festNotes = [262, 330, 392, 523, 659, 784, 1047];
       const festGap   = 0.045; // 45ms — expansivo, cada nota respira
       const festTypes = ['sine','sine','triangle','sine','triangle','sine','sine'];
@@ -1416,14 +1442,12 @@ function playSound(type){
         osc.connect(g);
         osc.frequency.value = freq;
         const t = ctx.currentTime + i * festGap;
-        // Volume cresce até o meio, depois mantém (sensação de crescendo)
         const vol = i < 4 ? 0.14 + i * 0.02 : 0.20 - (i - 4) * 0.02;
         g.gain.setValueAtTime(vol, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
         osc.start(t);
         osc.stop(t + 0.15);
       });
-      // Dois pings finais brilhantes: C7 + E7 (fanfarra de conclusão)
       [2093, 2637].forEach((freq, i) => {
         const ping = ctx.createOscillator();
         ping.type = 'sine'; ping.connect(g);
@@ -1434,8 +1458,6 @@ function playSound(type){
         ping.start(pt); ping.stop(pt + 0.10);
       });
     }else if(type==='wrong'){
-      // ── Item 1: erro mais agudo e leve — duas notas descendentes, menos pesado ──
-      // Bb4 → G4: "dip" musical, não um buzzer agressivo
       [[466, 0], [392, 0.12]].forEach(([freq, delay]) => {
         const o = ctx.createOscillator();
         o.type = 'sine'; o.connect(g); o.frequency.value = freq;
@@ -1481,12 +1503,6 @@ function playSound(type){
     }
   }catch(e){}
 }
-
-// ═══════════════════════════════════════════════════════
-//  CONFETTI
-// ═══════════════════════════════════════════════════════
-//  CANVAS — confetti + fever (ambos declarados antes de qualquer uso)
-// ═══════════════════════════════════════════════════════
 const canvas      = document.getElementById('confetti-canvas');
 const ctx2d       = canvas.getContext('2d');
 const feverCanvas = document.getElementById('fever-canvas');
@@ -1524,9 +1540,6 @@ function animateParticles(){
   else{ rafId=null; ctx2d.clearRect(0,0,canvas.width,canvas.height); }
 }
 
-// ═══════════════════════════════════════════════════════
-//  FEVER PARTICLES — formas geométricas subindo
-// ═══════════════════════════════════════════════════════
 const FEVER_COLORS=['rgba(255,61,119,','rgba(255,140,0,','rgba(138,43,226,','rgba(255,193,7,'];
 const FEVER_SHAPES=['circle','diamond','triangle'];
 
@@ -1580,7 +1593,7 @@ function animateFever(ts){
   feverParts=feverParts.filter(p=>p.y>-30&&p.alpha>0.01);
   for(const p of feverParts){
     p.x+=p.vx;p.y+=p.vy;p.rot+=p.rotV;
-    p.alpha-=feverActive?0.005:0.018; // desvanecem rápido quando fever acaba
+    p.alpha-=feverActive?0.005:0.018; 
     drawFeverPart(p);
   }
   feverRaf=requestAnimationFrame(animateFever);
@@ -1595,21 +1608,14 @@ function startFeverParticles(){
 function stopFeverParticles(){
   feverActive=false;
   feverCanvas.classList.remove('active');
-  // Deixa as partículas existentes dissolverem naturalmente
 }
 
-// ═══════════════════════════════════════════════════════
-//  LOGO REATIVIDADE
-// ═══════════════════════════════════════════════════════
 function setLogoState(s){
   const logos=[document.getElementById('logo-topbar'),document.getElementById('logo-hero')].filter(Boolean);
   logos.forEach(l=>{l.classList.remove('logo-pulse','logo-sad','logo-fire');if(s)l.classList.add(s)});
   if(s)setTimeout(()=>logos.forEach(l=>l.classList.remove('logo-pulse','logo-sad','logo-fire')),1200);
 }
 
-// ═══════════════════════════════════════════════════════
-//  TOPBAR + RECORD
-// ═══════════════════════════════════════════════════════
 function updateTopbar(){
   const el=document.getElementById('topbar-xp');
   el.textContent=state.xp+' XP';el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
@@ -1625,9 +1631,6 @@ function showRecordBadge(){
   else wrap.innerHTML='';
 }
 
-// ═══════════════════════════════════════════════════════
-//  MODAL "VOCÊ SABIA?"
-// ═══════════════════════════════════════════════════════
 function openSabia(info, blockMeta, onNext){
   const overlay=document.getElementById('sabia-overlay');
   document.getElementById('sabia-info').innerHTML=info;
@@ -1644,14 +1647,10 @@ function closeSabia(){
   }
 }
 document.getElementById('sabia-next').onclick=closeSabia;
-// Fechar ao clicar fora do modal
 document.getElementById('sabia-overlay').addEventListener('click',function(e){
   if(e.target===this)closeSabia();
 });
 
-// ═══════════════════════════════════════════════════════
-//  INDICADOR DE BLOCOS
-// ═══════════════════════════════════════════════════════
 function updateBlockIndicator(){
   const q=ALL_QUESTIONS[state.qIdx]||ALL_QUESTIONS[ALL_QUESTIONS.length-1];
   const currentBlock=q.block;
@@ -1663,9 +1662,6 @@ function updateBlockIndicator(){
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  LEVEL UP OVERLAY
-// ═══════════════════════════════════════════════════════
 const BLOCK_LEVELS = ['NÍVEL 1','NÍVEL 2','NÍVEL 3','NÍVEL 4 FINAL'];
 const BLOCK_ACCENTS = [
   'rgba(138,43,226,0.3)','rgba(225,48,108,0.3)',
@@ -1678,15 +1674,12 @@ function showLevelUp(blockIdx, blkMeta, onDone){
   document.getElementById('level-up-sub').textContent  = blkMeta.emoji+' '+blkMeta.title;
   document.getElementById('level-up-badge').textContent = '4 novas perguntas · XP aguarda!';
 
-  // Acento de cor do bloco no overlay
   overlay.style.background = 'rgba(0,0,0,0.92)';
-
   overlay.classList.add('show');
   spawnConfetti(window.innerWidth/2, window.innerHeight*0.35, 60);
   playSound('block');
   haptic([50,30,200]);
 
-  // Botão de continuar
   const btn = document.getElementById('level-up-continue');
   const handler = ()=>{
     overlay.classList.remove('show');
@@ -1694,8 +1687,6 @@ function showLevelUp(blockIdx, blkMeta, onDone){
     setTimeout(onDone, 200);
   };
   btn.addEventListener('click', handler);
-
-  // Auto-dismiss em 4s se o usuário não clicar
   setTimeout(()=>{
     if(overlay.classList.contains('show')){
       overlay.classList.remove('show');
@@ -1705,9 +1696,6 @@ function showLevelUp(blockIdx, blkMeta, onDone){
   }, 4000);
 }
 
-// ═══════════════════════════════════════════════════════
-//  CALC XP
-// ═══════════════════════════════════════════════════════
 function calcXp(tl,isOk,streak,mult,isGold){
   if(!isOk)return{base:0,sBonus:0,speedBonus:0,catBonus:0,goldBonus:0,total:0};
   const base=tl>=10?100:tl>=5?50:30;
@@ -1720,14 +1708,10 @@ function calcXp(tl,isOk,streak,mult,isGold){
   return{base,sBonus,speedBonus,catBonus,goldBonus,total};
 }
 
-// ═══════════════════════════════════════════════════════
-//  INTRO
-// ═══════════════════════════════════════════════════════
-// ── Validação simples de CPF (formato e dígitos verificadores) ──────────
 function validarCPF(cpf){
   cpf = cpf.replace(/[^\d]/g,'');
   if(cpf.length !== 11) return false;
-  if(/^(\d)\1{10}$/.test(cpf)) return false; // todos os dígitos iguais
+  if(/^(\d)\1{10}$/.test(cpf)) return false; 
   let soma=0;
   for(let i=0;i<9;i++) soma += parseInt(cpf[i]) * (10-i);
   let resto = (soma*10) % 11;
@@ -1741,7 +1725,7 @@ function validarCPF(cpf){
   return true;
 }
 
-// ── Máscara de CPF em tempo real ─────────────────────────────────────────
+// Máscara CPF 
 document.getElementById('input-cpf').addEventListener('input', e=>{
   let v = e.target.value.replace(/\D/g,'').slice(0,11);
   if(v.length>9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
@@ -1754,7 +1738,7 @@ document.getElementById('input-cpf').addEventListener('input', e=>{
 
 document.getElementById('cadastro-form').addEventListener('submit', e=>{
   e.preventDefault();
-  unlockAudio(); // destrava AudioContext na primeira interação real
+  unlockAudio();
 
   const nome   = document.getElementById('input-nome').value.trim();
   const cpfRaw = document.getElementById('input-cpf').value.trim();
@@ -1771,11 +1755,9 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   cpfInput.classList.remove('invalid');
   cpfErr.textContent = '';
 
-  // ── Armazena dados de cadastro no estado — pronto para envio a uma API ──
+  // Armazena dados de cadastro no estado — Envio de uma API ou banco de dados
   state.cadastro = { nome, cpf:cpfRaw, cidade, timestamp:new Date().toISOString() };
-  state.nick = nome.split(' ')[0] || nome; // primeiro nome para exibição no jogo
-
-  // ── Salva participante no Supabase (não bloqueia o início do quiz) ──
+  state.nick = nome.split(' ')[0] || nome;
   registrarParticipante(state.cadastro);
 
   state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
@@ -1793,37 +1775,29 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   renderQ();
 });
 
-// ═══════════════════════════════════════════════════════
-//  RENDER PERGUNTA
-// ═══════════════════════════════════════════════════════
+
 function renderQ(){
   if(state.qIdx>=ALL_QUESTIONS.length){showResult();return;}
   const q=ALL_QUESTIONS[state.qIdx];
   const blkMeta=getBlockMeta(q.block);
   const isFree=q.ans===-1;
-  const isGold=state.qIdx===ALL_QUESTIONS.length-1; // última = rodada de ouro
+  const isGold=state.qIdx===ALL_QUESTIONS.length-1; 
   const totalQ=ALL_QUESTIONS.length;
 
   updateBlockIndicator();
 
-  // ── Tema de cor por bloco ──────────────────────────────
   document.body.classList.remove('theme-b0','theme-b1','theme-b2','theme-b3');
   if(!isGold) document.body.classList.add('theme-b'+q.block);
-
-  // Transição de bloco — primeira pergunta de cada bloco (qIdx > 0)
   if(state.qIdx>0 && ALL_QUESTIONS[state.qIdx-1].block !== q.block){
     document.body.classList.remove('golden');
     playSound('block');
-    // Mostrar overlay Level Up brevemente, depois renderizar
     showLevelUp(q.block, blkMeta, ()=>{
-      _renderQContent(q, blkMeta, isFree, isGold, totalQ);
+    _renderQContent(q, blkMeta, isFree, isGold, totalQ);
     });
-    return; // conteúdo será renderizado pelo callback do Level Up
+    return;
   }
 
-  // Pergunta de ouro
   _applyGoldenMode(isGold);
-
   _renderQContent(q, blkMeta, isFree, isGold, totalQ);
 }
 
@@ -1873,18 +1847,13 @@ function _renderQContent(q, blkMeta, isFree, isGold, totalQ){
   });
 
   state.answered=false;
-  // Item 2: Fever (streak≥3) = 10s · Rodada de Ouro = 12s · Normal = 15s
-  const timerSecs = isGold ? 22 : (state.streak >= 3 ? 25 : 30); // 30s normal, 25s fever, 22s gold
+  const timerSecs = isGold ? 22 : (state.streak >= 3 ? 25 : 30); 
   startTimer(timerSecs);
 }
 
-// ═══════════════════════════════════════════════════════
-//  STREAK STRIP
-// ═══════════════════════════════════════════════════════
 function updateStreakStrip(){
   [0,1,2].forEach(i=>{
     const f=document.getElementById('sf'+i);
-    // Streak gradual: lit only up to current streak count
     if(state.streak>i)f.classList.add('lit');else f.classList.remove('lit');
   });
   const mult=document.getElementById('streak-mult');
@@ -1894,7 +1863,6 @@ function updateStreakStrip(){
 
   if(state.streak>=3){
     mult.classList.remove('show');
-    // ── Texto dinâmico do Fever Badge por nível de streak ──────────
     feverBadge.classList.remove('lvl3','lvl4','lvl5','lvl6');
     if(state.streak>=6){
       feverBadge.textContent='🔥 Múltiplos Acertos!';
@@ -1929,9 +1897,6 @@ function updateStreakStrip(){
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  TIMER
-// ═══════════════════════════════════════════════════════
 function startTimer(seconds=15){
   clearInterval(state.timer);state.timeLeft=seconds;updateTimer(seconds);
   state.timer=setInterval(()=>{
@@ -1940,18 +1905,17 @@ function startTimer(seconds=15){
   },1000);
 }
 function updateTimer(maxSecs){
-  // maxSecs pode ser undefined em chamadas internas — usa o slot arredondado acima
-  const base=maxSecs||(state.streak>=3?25:30); // 30s normal, 25s fever
+  const base=maxSecs||(state.streak>=3?25:30); 
   const pct=Math.max(0,Math.round(state.timeLeft/base*100));
   const fill=document.getElementById('timer-fill');const row=document.getElementById('timer-row');
   document.getElementById('timer-num').textContent=state.timeLeft;
   if(!row.classList.contains('fever')){
     fill.style.width=pct+'%';
-    fill.style.background=state.timeLeft>15?'#00C853':state.timeLeft>7?'#FF8C00':'#FF3D77'; // adjusted for 30s
+    fill.style.background=state.timeLeft>15?'#00C853':state.timeLeft>7?'#FF8C00':'#FF3D77';
   } else {
-    fill.style.width=pct+'%'; // cor controlada pelo .fever CSS
+    fill.style.width=pct+'%';
   }
-  if(state.timeLeft<=5&&state.timeLeft>0)row.classList.add('urgent'); // urgent nos últimos 5s
+  if(state.timeLeft<=5&&state.timeLeft>0)row.classList.add('urgent');
   else row.classList.remove('urgent');
 }
 function timeout(){
@@ -1962,7 +1926,6 @@ function timeout(){
   if(!isFree){ playSound('timeout'); haptic([100,50,100]); }
   document.getElementById('timer-row').classList.remove('urgent');
 
-  // Revela resposta correta — escopo restrito à pergunta atual
   const timeoutOpts = document.getElementById('opts').querySelectorAll('.opt-btn');
   timeoutOpts.forEach((b,i)=>{
     b.disabled=true;
@@ -1978,10 +1941,8 @@ function timeout(){
   const blkMeta = getBlockMeta(q.block);
 
   if(isFree){
-    // Bloco 4 livre: avança direto
     setTimeout(advance, 400);
   } else {
-    // Pergunta obrigatória: exibe modal com resposta certa + opção de reiniciar
     setTimeout(()=>openTimeoutModal(q, blkMeta), 600);
   }
 }
@@ -1992,8 +1953,6 @@ function openTimeoutModal(q, blkMeta){
   document.getElementById('tm-correct-answer').textContent = correctOpt;
 
   overlay.classList.add('show');
-
-  // Botão continuar: fecha modal → Você Sabia? → avança
   const btnContinue = document.getElementById('tm-btn-continue');
   const btnRestart  = document.getElementById('tm-btn-restart');
 
@@ -2014,9 +1973,6 @@ function openTimeoutModal(q, blkMeta){
   btnRestart.addEventListener('click', handleRestart);
 }
 
-// ═══════════════════════════════════════════════════════
-//  ANSWER
-// ═══════════════════════════════════════════════════════
 function answer(idx){
   if(state.answered)return;
   clearInterval(state.timer);state.answered=true;
@@ -2028,8 +1984,6 @@ function answer(idx){
   const isOk=isFree||(idx===q.ans);
   const isGold=state.qIdx===ALL_QUESTIONS.length-1;
   const xpR=calcXp(state.timeLeft,isOk,state.streak,blkMeta.mult,isGold);
-
-  // ── FIX: escopo restrito aos botões da pergunta ATUAL ──────────────
   const currentOpts = document.getElementById('opts').querySelectorAll('.opt-btn');
   currentOpts.forEach((b,i)=>{
     b.disabled=true;
@@ -2072,14 +2026,11 @@ function answer(idx){
     showReinforce(msg);
     if(!isFree)toast('+'+xpR.total+' XP'+(isGold?' 🏆':''));
     checkAchievements();
-
-    // Item 5: ao chegar em 5 acertos, embaralha perguntas restantes (uma só vez)
     if(state.correct === 5 && !state.shuffledAt5){
       state.shuffledAt5 = true;
       const nextIdx = state.qIdx + 1;
       if(nextIdx < ALL_QUESTIONS.length){
         const remaining = ALL_QUESTIONS.splice(nextIdx);
-        // Fisher-Yates dentro de cada bloco (mantém separação de blocos)
         const byBlock = [[], [], [], []];
         remaining.forEach(q => byBlock[q.block].push(q));
         byBlock.forEach(arr => {
@@ -2097,12 +2048,8 @@ function answer(idx){
 
     state.answersLog.push({qIdx:state.qIdx,selected:idx,isOk,timeLeft:state.timeLeft,xp:xpR.total,isFree});
     updateTopbar();updateStats();updateStreakStrip();
-
-    // Item 4: acerto → avança direto, SEM modal Você Sabia?
     setTimeout(advance, isFree ? 400 : 600);
-
   } else {
-    // Item 3: Streak perde apenas 1 foguinho (mínimo 0)
     state.streak = Math.max(0, state.streak - 1);
     state.consecutiveWrong++;
     playSound('wrong'); haptic([100,50,100]);
@@ -2112,7 +2059,6 @@ function answer(idx){
     state.answersLog.push({qIdx:state.qIdx,selected:idx,isOk,timeLeft:state.timeLeft,xp:0,isFree});
     updateTopbar(); updateStats(); updateStreakStrip();
 
-    // Item 4: erro → abre modal Você Sabia? antes de avançar
     setTimeout(() => openSabia(q.info, blkMeta, advance), 500);
   }
 }
@@ -2139,26 +2085,19 @@ function checkAchievements(){
   });
 }
 
-// ═══════════════════════════════════════════════════════
-//  AVANÇAR — com gating de blocos (mínimo 3/4 acertos por bloco)
-// ═══════════════════════════════════════════════════════
 function advance(){
   const justFinishedBlock = ALL_QUESTIONS[state.qIdx]?.block ?? -1;
   state.qIdx++;
 
-  // ── GATING: verifica ao final de cada bloco (índices 3, 7, 11) ──────────
-  // Apenas para blocos 0, 1 e 2 (bloco 3 é livre, sem barreira)
-  const lastQOfBlock = [3, 7, 11]; // índices das últimas perguntas de B1, B2, B3
+  const lastQOfBlock = [3, 7, 11];
   if(justFinishedBlock <= 2 && lastQOfBlock.includes(state.qIdx - 1)){
     const blockAcertos = state.blockCorrects[justFinishedBlock];
     if(blockAcertos < 3){
-      // ── Menos de 3 acertos → Game Over de bloco ──
       showBlockGameOver(justFinishedBlock, blockAcertos);
       return;
     }
   }
 
-  // ── Bloco 4: exibe tela de transição especial antes da 1ª pergunta ──────
   if(state.qIdx === 12 && !state.block4IntroShown){
     state.block4IntroShown = true;
     showBlock4Intro(() => renderQ());
@@ -2174,7 +2113,6 @@ function advance(){
   }
 }
 
-// ── GAME OVER de bloco — modal encorajador ───────────────────────────────
 function showBlockGameOver(blockIdx, acertos){
   clearInterval(state.timer);
   const overlay = document.getElementById('gameover-overlay');
@@ -2187,7 +2125,6 @@ function showBlockGameOver(blockIdx, acertos){
   setLogoState('logo-sad');
 }
 
-// ── TELA DE TRANSIÇÃO BLOCO 4 — abacaxi pulando ─────────────────────────
 function showBlock4Intro(onDone){
   const overlay = document.getElementById('block4-intro-overlay');
   overlay.classList.add('show');
@@ -2203,7 +2140,6 @@ function showBlock4Intro(onDone){
   };
   btn.addEventListener('click', handler);
 
-  // Auto-avança em 6s
   setTimeout(() => {
     if(overlay.classList.contains('show')){
       overlay.classList.remove('show');
@@ -2213,9 +2149,6 @@ function showBlock4Intro(onDone){
   }, 6000);
 }
 
-// ═══════════════════════════════════════════════════════
-//  RESULT
-// ═══════════════════════════════════════════════════════
 function animateCounter(el,target,duration=1600){
   const start=performance.now();
   function step(now){
@@ -2238,11 +2171,27 @@ function showResult(){
 
   const patente=getPatente(state.correct);
 
+  salvarResultado(state.cadastro, state.xp, state.correct, patente.title, state.completedGame);
+  setTimeout(() => {
+    const ne = document.getElementById('cert-name');
+    const ce = document.getElementById('cert-city');
+    const pe = document.getElementById('cert-patente-emoji');
+    const pn = document.getElementById('cert-patente-name');
+    const xe = document.getElementById('cert-xp');
+    const ae = document.getElementById('cert-acertos');
+    const de = document.getElementById('cert-date');
+    if(ne) ne.textContent = state.cadastro.nome   || state.nick || 'Participante';
+    if(ce) ce.textContent = state.cadastro.cidade || 'Barcarena';
+    if(pe) pe.textContent = patente.emoji;
+    if(pn) pn.textContent = patente.title;
+    if(xe) xe.textContent = state.xp;
+    if(ae) ae.textContent = state.correct + '/12';
+    if(de) de.textContent = new Date().toLocaleDateString('pt-BR');
+  }, 60);
+
   document.getElementById('res-rank').textContent=patente.emoji;
   document.getElementById('res-title').textContent=patente.title+'!';
   document.getElementById('res-sub').textContent=state.nick+' — '+patente.sub;
-
-  // Patente card
   document.getElementById('res-patente-emoji').textContent=patente.emoji;
   document.getElementById('res-patente-title').textContent=patente.title;
   document.getElementById('res-acertos').innerHTML=
@@ -2251,7 +2200,6 @@ function showResult(){
   xpEl.textContent='0';
   setTimeout(()=>animateCounter(xpEl,state.xp,1600),200);
 
-  // Grade de faixas
   const faixasEl=document.getElementById('rank-faixas');
   faixasEl.innerHTML=PATENTES.slice().reverse().map(p=>{
     const active=state.correct>=p.minAcertos&&state.correct<=p.maxAcertos;
@@ -2261,7 +2209,6 @@ function showResult(){
     </div>`;
   }).join('');
 
-  // Barra progressão de patente
   const pIdx=PATENTES.indexOf(patente);
   const nextPatente=PATENTES[pIdx-1];
   const rpEl=document.getElementById('rank-progress');
@@ -2279,7 +2226,6 @@ function showResult(){
     rpEl.innerHTML='<div class="rank-progress-next" style="color:var(--accent2);font-weight:700;text-align:center">🏆 Patente máxima alcançada!</div>';
   }
 
-  // ── Insígnia Cidadão Participativo (completou todos os blocos) ──────────
   const cidadaoEl = document.getElementById('cidadao-badge-wrap');
   if(state.completedGame){
     cidadaoEl.style.display = 'block';
@@ -2287,7 +2233,6 @@ function showResult(){
     cidadaoEl.style.display = 'none';
   }
 
-  // Conquistas
   const snap={xp:state.xp,correct:state.correct,fastAns:state.fastAns,maxStreak:state.maxStreak,qIdx:state.qIdx};
   document.getElementById('ach-grid').innerHTML=ACHIEVEMENTS.map((a,i)=>{
     const earned=a.check(snap)||state.earnedAchs.has(a.slug);
@@ -2297,25 +2242,30 @@ function showResult(){
     </div>`;
   }).join('');
 
-  // Leaderboard
-  const board=[...FAKE_LB,{name:state.nick,xp:state.xp}].sort((a,b)=>b.xp-a.xp).slice(0,6);
-  const medals=['🥇','🥈','🥉'];
-  document.getElementById('lb-card').innerHTML='<div class="lb-head">🏆 Ranking do Festival</div>'+
-    board.map((p,i)=>
-      `<div class="lb-row ${p.name===state.nick?'me':''}" style="animation-delay:${i*.08}s">
-        <div class="lb-pos">${i+1}°</div><div class="lb-medal">${medals[i]||''}</div>
-        <div class="lb-name">${p.name}${p.name===state.nick?' 👈':''}</div>
-        <div class="lb-xp">${p.xp} XP</div>
-      </div>`
-    ).join('');
+  const lbEl = document.getElementById('lb-card');
+  lbEl.innerHTML = '<div class="lb-head">🏆 Ranking do Festival</div><div class="lb-loading">Carregando ranking...</div>';
+  const medals = ['🥇','🥈','🥉'];
+
+  buscarRanking().then(board => {
+    if(!board || board.length === 0){
+      lbEl.innerHTML = '<div class="lb-head">🏆 Ranking do Festival</div><div class="lb-loading">Seja o primeiro a jogar! 🍍</div>';
+      return;
+    }
+    lbEl.innerHTML = '<div class="lb-head">🏆 Ranking do Festival</div>' +
+      board.slice(0,8).map((p,i) =>
+        `<div class="lb-row ${p.isMe ? 'me' : ''}" style="animation-delay:${i*.08}s">
+          <div class="lb-pos">${i+1}°</div>
+          <div class="lb-medal">${medals[i]||''}</div>
+          <div class="lb-name">${p.nome}${p.isMe?' 👈':''}</div>
+          <div class="lb-xp">${p.xp} XP</div>
+        </div>`
+      ).join('');
+  });
 
   setTimeout(()=>spawnConfetti(window.innerWidth/2,window.innerHeight*0.18,100),300);
   updateTopbar();
 }
 
-// ═══════════════════════════════════════════════════════
-//  COMPARTILHAMENTO
-// ═══════════════════════════════════════════════════════
 function buildShareText(isChallenge){
   const p=getPatente(state.correct);
   if(isChallenge)return `🍍 Conquistei a patente ${p.emoji} "${p.title}" no Quiz do Festival do Abacaxi de Barcarena!\n\n🏆 ${state.correct} acertos e ${state.xp} XP — você consegue superar?\n\n#FestivalDoAbacaxi #Barcarena #Desafio`;
@@ -2325,7 +2275,7 @@ function doShare(text,title){
   if(navigator.share)navigator.share({title,text});
   else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('📋 Copiado!'));
 }
-// Certificado: baixar como imagem (html2canvas)
+
 document.getElementById('btn-cert-download').onclick=()=>{
   const el = document.getElementById('certificado');
   if(typeof html2canvas === 'undefined'){
@@ -2345,17 +2295,13 @@ document.getElementById('btn-cert-download').onclick=()=>{
   });
 };
 
-// Certificado: imprimir / salvar como PDF (nativo do navegador)
+
 document.getElementById('btn-cert-print').onclick=()=>{
   window.print();
 };
 
 document.getElementById('btn-share').onclick=()=>doShare(buildShareText(false),'Quiz Festival do Abacaxi');
 document.getElementById('btn-challenge').onclick=()=>doShare(buildShareText(true),'Desafio — Quiz Festival do Abacaxi');
-
-// ═══════════════════════════════════════════════════════
-//  REVISÃO
-// ═══════════════════════════════════════════════════════
 document.getElementById('btn-review').onclick=()=>{
   document.getElementById('review-list').innerHTML=state.answersLog.map(log=>{
     const q=ALL_QUESTIONS[log.qIdx];const isFree=log.isFree||q.ans===-1;
@@ -2385,18 +2331,13 @@ document.getElementById('btn-replay').onclick=()=>{
   showRecordBadge();showScreen('screen-intro');
 };
 
-// ═══════════════════════════════════════════════════════
-//  GAME OVER OVERLAY — retry / quit handlers
-// ═══════════════════════════════════════════════════════
+
 document.getElementById('go-retry-btn').onclick = () => {
   const overlay = document.getElementById('gameover-overlay');
   overlay.classList.remove('show');
-  // Retrocede ao início do bloco que falhou e zera seus acertos
   const failedBlock = ALL_QUESTIONS[state.qIdx - 1]?.block ?? 0;
-  // qIdx do início do bloco: bloco * 4
   state.qIdx = failedBlock * 4;
   state.blockCorrects[failedBlock] = 0;
-  // Reseta streak e consecutiveWrong, mantém XP já ganho
   state.streak = 0; state.consecutiveWrong = 0;
   updateTopbar(); updateStreakStrip();
   renderQ();
@@ -2412,7 +2353,6 @@ document.getElementById('go-quit-btn').onclick = () => {
   showScreen('screen-intro');
 };
 
-// ── Reinício completo do quiz ─────────────────────────
 function fullRestart(){
   clearInterval(state.timer);
   state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
@@ -2430,13 +2370,10 @@ function fullRestart(){
   renderQ();
 }
 
-// Reiniciar → começa nova partida imediatamente
+
 function restartQuiz(){
-  // setTimeout garante que o clique termina antes de remover o footer da DOM
   setTimeout(fullRestart, 50);
 }
-
-// Voltar para o Início → vai para a tela de intro
 function goHome(){
   clearInterval(state.timer);
   document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
@@ -2449,7 +2386,6 @@ function goHome(){
   showScreen('screen-intro');
 }
 
-// Mostra/oculta footer conforme tela ativa
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -2457,27 +2393,22 @@ function showScreen(id){
   if(footer) footer.style.display = (id === 'screen-quiz') ? 'flex' : 'none';
 }
 
-// ═══════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════
 showRecordBadge();
-
-// ── Topbar scroll-away: some ao rolar pra baixo, aparece ao rolar pra cima ──
 (function(){
   const topbar = document.querySelector('.topbar');
   if(!topbar) return;
   let lastY = 0, ticking = false;
-  const THRESHOLD = 8; // px mínimos para disparar
+  const THRESHOLD = 8;
   window.addEventListener('scroll', ()=>{
     if(!ticking){
       requestAnimationFrame(()=>{
         const y = window.scrollY;
         if(y > lastY + THRESHOLD){
-          topbar.classList.add('hidden');    // rolando para baixo: esconde
+          topbar.classList.add('hidden');    
         } else if(y < lastY - THRESHOLD){
-          topbar.classList.remove('hidden'); // rolando para cima: mostra
+          topbar.classList.remove('hidden');
         }
-        if(y < 10) topbar.classList.remove('hidden'); // no topo: sempre visível
+        if(y < 10) topbar.classList.remove('hidden'); 
         lastY = y;
         ticking = false;
       });
