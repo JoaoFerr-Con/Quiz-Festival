@@ -22,6 +22,7 @@
   --radius:16px;--radius-sm:10px;--radius-pill:50px;
   --gold-bg:#1A150A;--gold-bg2:#2C220A;
 }
+/* ── Temas por bloco (transição suave de ambiente) ── */
 body.theme-b0{--bg:#110D1F;--bg2:#1F183B;--bg-glass:rgba(31,24,59,0.82)}
 body.theme-b1{--bg:#1A0D16;--bg2:#2D1522;--bg-glass:rgba(45,21,34,0.82)}
 body.theme-b2{--bg:#0A1A14;--bg2:#122E25;--bg-glass:rgba(18,46,37,0.82)}
@@ -895,6 +896,10 @@ body.golden{background:var(--gold-bg)}
 .cert-preview-text h4{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;
   color:var(--accent2);margin-bottom:3px}
 .cert-preview-text p{font-size:12px;color:var(--text2);line-height:1.5}
+
+.ach-box.locked{opacity:.38;filter:grayscale(1);pointer-events:none}
+.ach-locked-emoji{display:inline-block;filter:blur(2px) grayscale(1)}
+.ach-box.locked .ach-name{color:var(--text3)}
 </style>
 </head>
 <body class="theme-b0">
@@ -1026,9 +1031,9 @@ body.golden{background:var(--gold-bg)}
       </div>
       <div class="field-wrap">
         <label for="input-cidade">Cidade</label>
-        <input id="input-cidade" type="text" placeholder=" Barcarena" maxlength="40" required>
+        <input id="input-cidade" type="text" placeholder="Barcarena" maxlength="40" required>
       </div>
-      <p class="privacy-note">🔒 Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros.</p>
+      <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros.🔒 </p>
       <button type="submit" class="btn-primary" id="btn-start">Iniciar jornada </button>
     </form>
   </div>
@@ -1233,9 +1238,9 @@ function getSupabase(){
 }
 
 
-async function registrarParticipante(cadastro){
+async function registrarParticipante(cadastro, tentativa=1){
   const sb = getSupabase();
-  if(!sb){ console.log('[Quiz] Cadastro local (sem Supabase):', cadastro); return; }
+  if(!sb){ console.log('[Quiz] Cadastro local (sem Supabase) — CPF omitido por privacidade'); return; }
   try{
     const { error } = await sb.from('participantes').insert({
       nome:        cadastro.nome,
@@ -1246,23 +1251,28 @@ async function registrarParticipante(cadastro){
       acertos:     0,
       patente:     '',
       completou:   false,
-      tempo_medio: 0   // será atualizado em salvarResultado()
+      tempo_medio: 0
     });
-    if(error) console.error('[Quiz] Erro ao registrar participante:', error.message);
-    else       console.log('[Quiz] Participante registrado no Supabase.');
+    if(error){
+      console.error('[Quiz] Erro ao registrar (tentativa '+tentativa+'):', error.message);
+      if(tentativa < 2) setTimeout(()=>registrarParticipante(cadastro, tentativa+1), 2000);
+    } else {
+      console.log('[Quiz] Participante registrado.');
+    }
   }catch(e){
     console.error('[Quiz] Falha de rede ao registrar:', e);
+    if(tentativa < 2) setTimeout(()=>registrarParticipante(cadastro, tentativa+1), 2000);
   }
 }
 
-async function salvarResultado(cadastro, xp, acertos, patente, completou){
+async function salvarResultado(cadastro, xp, acertos, patente, completou, tentativa=1){
   const sb = getSupabase();
   if(!sb) return;
   try{
 
     const respostas = state.answersLog.filter(l => !l.isFree && l.timeLeft !== undefined);
     const tempoMedio = respostas.length > 0
-      ? Math.round(respostas.reduce((s,l) => s + (30 - l.timeLeft), 0) / respostas.length)
+      ? Math.round(respostas.reduce((s,l) => s + (20 - Math.max(0,l.timeLeft)), 0) / respostas.length)
       : 30;
 
 
@@ -1280,39 +1290,61 @@ async function salvarResultado(cadastro, xp, acertos, patente, completou){
       .update({ xp, acertos, patente, completou, tempo_medio: tempoMedio })
       .eq('id', data[0].id);
 
-    if(error) console.error('[Quiz] Erro ao salvar resultado:', error.message);
-    else       console.log('[Quiz] Resultado salvo:', {xp, acertos, patente, completou, tempoMedio});
+    if(error){
+      console.error('[Quiz] Erro ao salvar (tentativa '+tentativa+'):', error.message);
+      if(tentativa < 2) setTimeout(()=>salvarResultado(cadastro,xp,acertos,patente,completou,tentativa+1),2000);
+    } else { console.log('[Quiz] Resultado salvo.'); }
   }catch(e){
-    console.error('[Quiz] Falha de rede ao salvar resultado:', e);
+    console.error('[Quiz] Falha de rede ao salvar:', e);
+    if(tentativa < 2) setTimeout(()=>salvarResultado(cadastro,xp,acertos,patente,completou,tentativa+1),2000);
   }
 }
 
 
 async function buscarRanking(){
   const sb = getSupabase();
-  if(!sb){
+  const jogadorAtual = {
+    nome: state.cadastro.nome || state.nick,
+    xp: state.xp,
+    patente: getPatente(state.correct).title,
+    isMe: true
+  };
 
-    return [{ nome: state.nick, xp: state.xp, patente: getPatente(state.correct).title, isMe: true }];
-  }
+  if(!sb) return [jogadorAtual];
+
   try{
+    await new Promise(r => setTimeout(r, 1500));
+
     const { data, error } = await sb
       .from('participantes')
       .select('nome, xp, patente, tempo_medio')
+      .gt('xp', 0)
       .order('xp', { ascending: false })
-      .order('tempo_medio', { ascending: true }) // desempate: menor tempo médio vence
+      .order('tempo_medio', { ascending: true })
       .limit(10);
 
-    if(error){ console.error('[Quiz] Erro ao buscar ranking:', error.message); return []; }
+    if(error){
+      console.error('[Quiz] Erro ao buscar ranking:', error.message);
+      if(error.code==='42501'||String(error.message).includes('denied')||String(error.message).includes('permission')){
+        console.warn('[Quiz] Execute no Supabase SQL Editor:\nCREATE POLICY "Leitura publica" ON participantes FOR SELECT USING (true);');
+      }
+      return [jogadorAtual];
+    }
 
-    return (data || []).map(p => ({
+    const rows = (data || []).map(p => ({
       nome: p.nome,
       xp:   p.xp,
       patente: p.patente,
-      isMe: p.nome === state.nick && p.xp === state.xp
+      isMe: p.nome === jogadorAtual.nome && p.xp === state.xp
     }));
+
+    const jaEsta = rows.some(r => r.isMe);
+    if(!jaEsta) rows.push(jogadorAtual);
+
+    return rows.sort((a,b)=> b.xp - a.xp || 0).slice(0,10);
   }catch(e){
     console.error('[Quiz] Falha de rede ao buscar ranking:', e);
-    return [];
+    return [jogadorAtual];
   }
 }
 
@@ -1414,7 +1446,7 @@ let state={
 
   cadastro:{ nome:'', cpf:'', cidade:'' },
   xp:0, streak:0, maxStreak:0, correct:0, fastAns:0,
-  timer:null, timeLeft:20, answered:false,
+  timer:null, timeLeft:20, answered:false, _answerLock:false,
   answersLog:[], earnedAchs:new Set(),
   consecutiveWrong:0,
   shuffledAt5:false,
@@ -1821,15 +1853,23 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   cpfInput.classList.remove('invalid');
   cpfErr.textContent = '';
 
-  state.cadastro = { nome, cpf:cpfRaw, cidade, timestamp:new Date().toISOString() };
+  function sanitize(s){ return s.replace(/[<>"'`]/g,'').trim().slice(0,60); }
+  state.cadastro = {
+    nome:   sanitize(nome),
+    cpf:    cpfRaw,
+    cidade: sanitize(cidade),
+    timestamp: new Date().toISOString()
+  };
   state.nick = nome.split(' ')[0] || nome; // primeiro nome para exibição no jogo
 
   registrarParticipante(state.cadastro);
 
   state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
   state.correct=0; state.fastAns=0; state.shuffledAt5=false;
+  state.answered=false; state._answerLock=false; state.timeLeft=20;
   state.answersLog=[]; state.earnedAchs=new Set(); state.consecutiveWrong=0;
   state.blockCorrects=[0,0,0,0]; state.block4IntroShown=false; state.completedGame=false;
+  state._answerLock=false;
   document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
   document.body.classList.add('theme-b0');
   document.querySelector('.app').classList.remove('fever-mode');
@@ -1912,14 +1952,19 @@ function _renderQContent(q, blkMeta, isFree, isGold, totalQ){
   updateStats();updateStreakStrip();
 
   const optsEl=document.getElementById('opts');
-  optsEl.innerHTML=q.opts.map((o,i)=>
-    `<button class="opt-btn" onclick="answer(${i})" aria-label="Opção ${String.fromCharCode(65+i)}: ${o}">
-      <span class="opt-letter">${String.fromCharCode(65+i)}</span>${o}
-      <span class="opt-icon"></span>
-    </button>`
-  ).join('');
-  document.querySelectorAll('.opt-btn').forEach((b,i)=>{
-    setTimeout(()=>b.classList.add('appear'),100+i*90);
+  optsEl.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.setAttribute('aria-label','Opção '+String.fromCharCode(65+i)+': '+o);
+    btn.setAttribute('onclick','answer('+i+')');
+    const letter=document.createElement('span');letter.className='opt-letter';letter.textContent=String.fromCharCode(65+i);
+    const icon=document.createElement('span');icon.className='opt-icon';
+    const txt=document.createTextNode(o);
+    btn.appendChild(letter);btn.appendChild(txt);btn.appendChild(icon);
+    btn.disabled=false;
+    optsEl.appendChild(btn);
+    setTimeout(()=>btn.classList.add('appear'),100+i*90);
   });
 
   state.answered=false;
@@ -2061,7 +2106,9 @@ function openTimeoutModal(q, blkMeta){
 
 
 function answer(idx){
-  if(state.answered)return;
+  if(state.answered||state._answerLock)return;
+  state._answerLock=true;
+  setTimeout(()=>{state._answerLock=false;},800);
   clearInterval(state.timer);state.answered=true;
   document.getElementById('timer-row').classList.remove('urgent');
 
@@ -2345,8 +2392,8 @@ function showResult(){
   const snap={xp:state.xp,correct:state.correct,fastAns:state.fastAns,maxStreak:state.maxStreak,qIdx:state.qIdx};
   document.getElementById('ach-grid').innerHTML=ACHIEVEMENTS.map((a,i)=>{
     const earned=a.check(snap)||state.earnedAchs.has(a.slug);
-    return `<div class="ach-box ${earned?'earned':''}" style="animation-delay:${i*.08}s">
-      <span class="ach-icon">${earned?a.emoji:'🔒'}</span>
+    return `<div class="ach-box ${earned?'earned':'locked'}" style="animation-delay:${i*.08}s">
+      <span class="ach-icon">${earned?a.emoji:'<span class="ach-locked-emoji">'+a.emoji+'</span>'}</span>
       <div class="ach-name">${earned?a.name:'???'}</div>
     </div>`;
   }).join('');
@@ -2436,10 +2483,12 @@ document.getElementById('go-retry-btn').onclick = () => {
   overlay.classList.remove('show');
 
   const failedBlock = ALL_QUESTIONS[state.qIdx - 1]?.block ?? 0;
-
-  state.qIdx = failedBlock * 4;
+  const firstQOfBlock = ALL_QUESTIONS.findIndex(q => q.block === failedBlock);
+  state.qIdx = firstQOfBlock >= 0 ? firstQOfBlock : failedBlock * 4;
   state.blockCorrects[failedBlock] = 0;
-
+  state._answerLock = false;
+  state.answered = false;
+  clearInterval(state.timer);
   state.streak = 0; state.consecutiveWrong = 0;
   updateTopbar(); updateStreakStrip();
   renderQ();
@@ -2459,8 +2508,10 @@ function fullRestart(){
   clearInterval(state.timer);
   state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
   state.correct=0; state.fastAns=0; state.shuffledAt5=false;
+  state.answered=false; state._answerLock=false; state.timeLeft=20;
   state.answersLog=[]; state.earnedAchs=new Set(); state.consecutiveWrong=0;
   state.blockCorrects=[0,0,0,0]; state.block4IntroShown=false; state.completedGame=false;
+  state._answerLock=false;
   document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
   document.body.classList.add('theme-b0');
   document.querySelector('.app').classList.remove('fever-mode');
@@ -2481,11 +2532,12 @@ function restartQuiz(){
 
 function goHome(){
   clearInterval(state.timer);
+  state.answered=false; state._answerLock=false;
   document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
   document.body.classList.add('theme-b0');
   document.querySelector('.app').classList.remove('fever-mode');
   document.getElementById('timer-row').classList.remove('fever');
-  document.getElementById('fever-badge').classList.remove('show');
+  document.getElementById('fever-badge').classList.remove('show','lvl3','lvl4','lvl5','lvl6');
   stopFeverParticles();
   showRecordBadge();
   showScreen('screen-intro');
@@ -2494,9 +2546,11 @@ function goHome(){
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const target=document.getElementById(id);
+  if(target) target.classList.add('active');
   const footer = document.getElementById('quiz-footer');
   if(footer) footer.style.display = (id === 'screen-quiz') ? 'flex' : 'none';
+  window.scrollTo({top:0, behavior:'instant'});
 }
 
 
@@ -2524,6 +2578,17 @@ showRecordBadge();
     }
   }, {passive:true});
 })();
+
+
+window.addEventListener('offline', ()=>{
+  toast('📶 Sem conexão — seus dados serão salvos quando voltar online.', 'warn');
+});
+window.addEventListener('online', ()=>{
+  if(state.cadastro && state.cadastro.nome && state.xp > 0){
+    salvarResultado(state.cadastro, state.xp, state.correct,
+      getPatente(state.correct).title, state.completedGame);
+  }
+});
 
 </script>
 </body>
