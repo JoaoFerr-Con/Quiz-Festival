@@ -665,15 +665,26 @@ body.golden{background:var(--gold-bg)}
 .quiz-footer{
   display:flex;gap:8px;justify-content:center;
   padding:12px 18px 20px;margin-top:auto;
+  background:rgba(10,7,20,0.6);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:0.5px solid rgba(255,255,255,0.06);
+  border-radius:0 0 var(--radius) var(--radius);
+  transition:opacity .3s ease;
 }
 .footer-btn{
   flex:1;max-width:180px;padding:10px 12px;
   font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;
-  background:transparent;border:1px solid var(--border);border-radius:var(--radius-pill);
-  color:var(--text3);cursor:pointer;transition:all .2s;text-align:center;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:var(--radius-pill);
+  color:var(--text3);cursor:pointer;transition:all .25s;text-align:center;
   text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
-.footer-btn:hover{border-color:var(--border2);color:var(--text2)}
+.footer-btn:hover{
+  border-color:rgba(255,140,0,0.4);color:var(--accent2);
+  background:rgba(255,140,0,0.07);
+  box-shadow:0 0 14px rgba(255,140,0,0.12);
+}
 
 /* ══ MODAL TIMEOUT — confirmar reinício ══ */
 .timeout-modal-overlay{
@@ -834,19 +845,14 @@ body.golden{background:var(--gold-bg)}
 .cert-footer .cert-date{font-family:'Montserrat',sans-serif;font-weight:600}
 .cert-footer .cert-seal{font-size:22px;filter:drop-shadow(0 0 8px rgba(255,193,7,0.4))}
 .cert-actions{display:flex;gap:8px;margin-top:10px}
-.btn-cert-download,.btn-cert-print{
+.btn-cert-download{
   flex:1;padding:13px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;
   background:transparent;border:1.5px solid var(--border);border-radius:var(--radius-pill);
   color:var(--text2);cursor:pointer;transition:all .25s;
 }
 .btn-cert-download:hover{border-color:rgba(255,193,7,0.5);color:var(--accent2);box-shadow:0 0 16px rgba(255,193,7,0.14)}
-.btn-cert-print:hover{border-color:rgba(0,229,255,0.5);color:#80F7FF;box-shadow:0 0 16px rgba(0,229,255,0.14)}
-@media print{
-  body *{visibility:hidden}
-  .certificado, .certificado *{visibility:visible}
-  .certificado{position:absolute;top:0;left:0;width:100%;margin:0;border-radius:0}
-  .cert-actions{display:none}
-}
+
+
 
 /* ── Twemoji nas rodadas da jornada ── */
 .jm-emoji-img{
@@ -868,6 +874,28 @@ body.golden{background:var(--gold-bg)}
 .jm-dot{
   width:32px!important;height:32px!important;
 }
+.btn-restart-home{
+  width:100%;padding:13px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;
+  background:transparent;border:1.5px solid var(--border);border-radius:var(--radius-pill);
+  color:var(--text3);cursor:pointer;transition:all .25s;margin-top:2px;
+}
+.btn-restart-home:hover{border-color:rgba(138,43,226,0.5);color:#D4BBFF;box-shadow:0 0 16px rgba(138,43,226,0.12)}
+
+.cert-preview-teaser{
+  background:linear-gradient(135deg,rgba(255,193,7,0.08),rgba(138,43,226,0.08));
+  border:1px solid rgba(255,193,7,0.25);border-radius:var(--radius);
+  padding:14px 16px;display:flex;align-items:center;gap:14px;
+  margin-bottom:18px;cursor:default;
+}
+.cert-preview-icon{font-size:36px;flex-shrink:0;
+  animation:certIconSpin 3s ease-in-out infinite alternate}
+@keyframes certIconSpin{
+  0%{transform:rotate(-6deg) scale(1)}
+  100%{transform:rotate(6deg) scale(1.1)}
+}
+.cert-preview-text h4{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;
+  color:var(--accent2);margin-bottom:3px}
+.cert-preview-text p{font-size:12px;color:var(--text2);line-height:1.5}
 </style>
 </head>
 <body class="theme-b0">
@@ -978,15 +1006,23 @@ body.golden{background:var(--gold-bg)}
       </div>
     </div>
 
+
+    <div class="cert-preview-teaser" aria-label="Ao completar o quiz você recebe um certificado digital">
+      <span class="cert-preview-icon">🏅</span>
+      <div class="cert-preview-text">
+        <h4>Ganhe seu Certificado Digital!</h4>
+        <p>Complete todas as rodadas e receba o <strong>Cartão de Cidadão Participativo</strong> — compartilhe nas redes e apresente nos estandes do festival!</p>
+      </div>
+    </div>
     <!-- ── Formulário de cadastro: Nome / CPF / Cidade ──────────────── -->
     <form id="cadastro-form" class="cadastro-form" autocomplete="off">
       <div class="field-wrap">
         <label for="input-nome">Nome completo</label>
-        <input id="input-nome" type="text" placeholder="Ex: Maria da Silva" maxlength="60" required>
+        <input id="input-nome" type="text" maxlength="60" required>
       </div>
       <div class="field-wrap">
         <label for="input-cpf">CPF</label>
-        <input id="input-cpf" type="text" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required>
+        <input id="input-cpf" type="tel" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required autocomplete="off">
         <span class="field-error" id="cpf-error"></span>
       </div>
       <div class="field-wrap">
@@ -1007,7 +1043,7 @@ body.golden{background:var(--gold-bg)}
       <div class="blk-dot" id="bd3"></div>
     </div>
     <div class="quiz-hdr">
-      <div class="cat-badge" id="q-cat-badge">Bloco 1</div>
+      <div class="cat-badge" id="q-cat-badge">Rodada 1</div>
       <div class="q-counter" id="q-counter">1 / 16</div>
     </div>
     <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
@@ -1026,7 +1062,7 @@ body.golden{background:var(--gold-bg)}
     <div class="timer-row" id="timer-row">
       <span class="timer-icon">⏱</span>
       <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%;background:#00C853"></div></div>
-      <div class="timer-num" id="timer-num">30</div>
+      <div class="timer-num" id="timer-num">20</div>
     </div>
     <div class="gold-banner" id="gold-banner">🏆 RODADA DO ABACAXI — XP em dobro!</div>
     <div class="reinforce-msg" id="reinforce-msg"></div>
@@ -1098,7 +1134,6 @@ body.golden{background:var(--gold-bg)}
       </div>
       <div class="cert-actions">
         <button class="btn-cert-download" id="btn-cert-download">⬇️ Baixar Certificado</button>
-        <button class="btn-cert-print" id="btn-cert-print">🖨️ Imprimir</button>
       </div>
     </div>
 
@@ -1123,8 +1158,7 @@ body.golden{background:var(--gold-bg)}
     <div class="result-actions">
       <button class="btn-primary btn-replay" id="btn-replay">Jogar novamente 🍍</button>
       <button class="btn-challenge" id="btn-challenge">🤝 Desafiar amigos</button>
-      <button class="btn-review" id="btn-review">📋 Revisar respostas</button>
-      <button class="btn-share" id="btn-share">📤 Compartilhar resultado</button>
+      <button class="btn-restart-home" id="btn-restart-home">↩ Recomeçar</button>
     </div>
   </div>
 
@@ -1140,7 +1174,7 @@ body.golden{background:var(--gold-bg)}
 <div class="gameover-overlay" id="gameover-overlay" role="dialog" aria-modal="true">
   <span class="gameover-emoji">😔</span>
   <div class="gameover-title">Quase lá!</div>
-  <div class="gameover-sub">Você precisa acertar pelo menos <strong>3 das 4 perguntas</strong> para avançar. Não desanime — Barcarena acredita em você!</div>
+  <div class="gameover-sub">Você precisa acertar pelo menos <strong>2 das 4 perguntas</strong> para avançar. Não desanime — Barcarena acredita em você!</div>
   <div class="gameover-block" id="go-block-name"></div>
   <div class="gameover-score">Sua pontuação neste bloco: <span id="go-acertos">0 de 4</span></div>
   <button class="go-retry" id="go-retry-btn">🔄 Tentar o bloco novamente</button>
@@ -1179,26 +1213,26 @@ body.golden{background:var(--gold-bg)}
 <script>
 
 
-const SUPABASE_URL      = 'https://zbwjqcpssvariihoivqj.supabase.co/rest/v1/';   
-const SUPABASE_ANON_KEY = 'sb_publishable_DtqpRX1T03L8_-i1ATCp6Q_9OOfW3Y_'; 
+const SUPABASE_URL      = 'https://zbwjqcpssvariihoivqj.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_DtqpRX1T03L8_-i1ATCp6Q_9OOfW3Y_';
 
 let _supabase = null;
 function getSupabase(){
   if(_supabase) return _supabase;
   try{
-    if(SUPABASE_URL.includes('COLE_') || SUPABASE_ANON_KEY.includes('COLE_')){
-      console.warn('[Quiz] Banco de Dados não configurado. Dados não serão salvos.');
+
+    if(!SUPABASE_URL.startsWith('https://') || SUPABASE_ANON_KEY.includes('COLE_')){
+      console.warn('[Quiz] Supabase não configurado. Dados não serão salvos remotamente.');
       return null;
     }
     _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     return _supabase;
   }catch(e){
-    console.error('[Quiz] Erro ao inicializar Banco de Dados:', e);
+    console.error('[Quiz] Erro ao inicializar Supabase:', e);
     return null;
   }
 }
 
-// ── Registrar participante ao iniciar o quiz pela primeira vez  
 
 async function registrarParticipante(cadastro){
   const sb = getSupabase();
@@ -1213,7 +1247,7 @@ async function registrarParticipante(cadastro){
       acertos:     0,
       patente:     '',
       completou:   false,
-      tempo_medio: 0   
+      tempo_medio: 0   // será atualizado em salvarResultado()
     });
     if(error) console.error('[Quiz] Erro ao registrar participante:', error.message);
     else       console.log('[Quiz] Participante registrado no Supabase.');
@@ -1222,15 +1256,16 @@ async function registrarParticipante(cadastro){
   }
 }
 
-// ── Atualizar resultado final ao terminar o quiz 
 async function salvarResultado(cadastro, xp, acertos, patente, completou){
   const sb = getSupabase();
   if(!sb) return;
   try{
+
     const respostas = state.answersLog.filter(l => !l.isFree && l.timeLeft !== undefined);
     const tempoMedio = respostas.length > 0
       ? Math.round(respostas.reduce((s,l) => s + (30 - l.timeLeft), 0) / respostas.length)
       : 30;
+
 
     const { data, error: fetchErr } = await sb
       .from('participantes')
@@ -1253,11 +1288,11 @@ async function salvarResultado(cadastro, xp, acertos, patente, completou){
   }
 }
 
-// ── Buscar ranking real do Banco de Dados 
-// Critério principal: maior XP. Desempate: menor tempo_medio de resposta.
+
 async function buscarRanking(){
   const sb = getSupabase();
   if(!sb){
+
     return [{ nome: state.nick, xp: state.xp, patente: getPatente(state.correct).title, isMe: true }];
   }
   try{
@@ -1265,7 +1300,7 @@ async function buscarRanking(){
       .from('participantes')
       .select('nome, xp, patente, tempo_medio')
       .order('xp', { ascending: false })
-      .order('tempo_medio', { ascending: true }) 
+      .order('tempo_medio', { ascending: true }) // desempate: menor tempo médio vence
       .limit(10);
 
     if(error){ console.error('[Quiz] Erro ao buscar ranking:', error.message); return []; }
@@ -1282,9 +1317,7 @@ async function buscarRanking(){
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  DADOS — 4 blocos lineares, 4 perguntas cada
-// ═══════════════════════════════════════════════════════
+
 const BLOCKS_META = [
   {id:'b1',title:'Rodada 1 — Orgulho de Ser Barcarenense',emoji:'🏛️',
    grad:'linear-gradient(135deg,#8A2BE2,#E1306C)',free:false,mult:1.0},
@@ -1298,12 +1331,11 @@ const BLOCKS_META = [
 
 
 const ALL_QUESTIONS = [
-  // ─── BLOCO 1 
   {block:0,emoji:'🍍',q:'Qual é o principal produto agrícola homenageado pelo Festival do Abacaxi?',
    opts:['Açaí','Mandioca','Abacaxi','Cupuaçu'],ans:2,
    info:'O abacaxi é o fruto símbolo de Barcarena! A cidade é carinhosamente chamada de <strong>"Terra do Abacaxi"</strong> e cerca de 10.000 famílias vivem de sua produção, com uma safra de aproximadamente 700 mil frutos por ano.'},
-  {block:0,emoji:'📅',q:'Em que mês o Festival do Abacaxi de Barcarena tradicionalmente ocorre?',
-   opts:['Julho','Agosto','Setembro','Outubro'],ans:2,
+  {block:0,emoji:'📅',q:'Em qual período o Festival do Abacaxi de Barcarena tradicionalmente ocorre?',
+   opts:['Janeiro/Fevereiro','Maio/Junho','Setembro/Outubro','Novembro/Dezembro'],ans:2,
    info:'O festival ocorre tradicionalmente em <strong>setembro/outubro</strong> no Ecoparque do Cafezal. Já são mais de 40 edições celebrando a cultura e a identidade de Barcarena.'},
   {block:0,emoji:'🏭',q:'Barcarena é reconhecida nacionalmente por qual atividade econômica?',
    opts:['Pecuária','Mineração e logística portuária','Produção de café','Turismo de neve'],ans:1,
@@ -1311,7 +1343,6 @@ const ALL_QUESTIONS = [
   {block:0,emoji:'📜',q:'Em que ano o Festival do Abacaxi foi tombado como Patrimônio Cultural Artístico do Pará?',
    opts:['2005','2009','2012','2015'],ans:1,
    info:'Em <strong>17 de novembro de 2009</strong>, pela Lei Estadual nº 7.336, o Festival do Abacaxi foi formalmente reconhecido como Patrimônio Cultural Artístico do Estado do Pará.'},
-  // ─── BLOCO 2 
   {block:1,emoji:'🗺️',q:'Qual destes distritos pertence ao município de Barcarena?',
    opts:['Murinim','Vila dos Cabanos','Icoaraci','Quatro Bocas'],ans:1,
    info:'<strong>Vila dos Cabanos</strong> é um importante distrito de Barcarena, surgido junto ao Distrito Industrial e à instalação das grandes empresas de alumínio na região.'},
@@ -1324,20 +1355,18 @@ const ALL_QUESTIONS = [
   {block:1,emoji:'🎭',q:'Qual concurso de beleza faz parte da programação oficial do Festival do Abacaxi?',
    opts:['Miss Amazônia','Princesa do Cafezal','Rainha do Festival do Abacaxi','Embaixatriz da Colheita'],ans:2,
    info:'O concurso <strong>"Rainha do Festival do Abacaxi"</strong> é uma das tradições mais aguardadas, com candidatas de toda a região de Barcarena disputando o título durante as festividades.'},
-  // ─── BLOCO 3 
   {block:2,emoji:'📈',q:'Nos últimos anos, Barcarena ampliou seus investimentos em qual área?',
    opts:['Educação','Exploração espacial','Ferrovia internacional','Produção de petróleo'],ans:0,
    info:'Entre 2021 e 2026, a Prefeitura realizou <strong>investimentos históricos na rede municipal de ensino</strong>, incluindo novas escolas, reformas e ampliação de vagas para crianças e jovens de Barcarena.'},
-  {block:2,emoji:'🏫',q:'Qual equipamento público foi ampliado ou modernizado nos últimos anos em Barcarena?',
-   opts:['Escolas municipais','Zoológico municipal','Metrô','Aeroporto internacional'],ans:0,
-   info:'A modernização das <strong>escolas municipais</strong> tem sido prioridade da gestão, garantindo melhores condições de aprendizado para os estudantes barcarenenses.'},
+  {block:2,emoji:'⚓',q:'Qual é o nome do principal porto de Barcarena, fundamental para as exportações do Norte do Brasil?',
+   opts:['Porto de Belém','Porto de Vila do Conde','Porto de Santarém','Porto de Marabá'],ans:1,
+   info:'O <strong>Porto de Vila do Conde</strong> é um dos maiores terminais de exportação da Amazônia, responsável pelo escoamento de alumínio, alumina e caulim para mercados internacionais, movimentando bilhões em exportações anuais.'},
   {block:2,emoji:'🏥',q:'Qual área está recebendo importantes investimentos da Prefeitura entre 2020 e 2026?',
    opts:['Saúde','Energia nuclear','Teleféricos','Portos marítimos internacionais'],ans:0,
    info:'Os investimentos em <strong>saúde pública</strong> têm ampliado o acesso da população a atendimentos, unidades de saúde e equipamentos modernos, beneficiando toda a comunidade barcarenense.'},
   {block:2,emoji:'🌿',q:'Qual empresa multinacional em Barcarena apoia projetos de desenvolvimento sustentável local?',
    opts:['Vale','Hydro','Petrobras','Embraer'],ans:1,
    info:'A <strong>Hydro</strong>, empresa norueguesa de alumínio, apoia a Iniciativa Barcarena Sustentável (IBS), com projetos de geração de renda, artesanato, gastronomia e fortalecimento cultural.'},
-  // ─── BLOCO 4 (livre — sem resposta errada)
   {block:3,emoji:'🔮',q:'Qual tema você considera mais importante para o futuro de Barcarena?',
    opts:['Emprego e renda','Educação','Saúde','Infraestrutura'],ans:-1,
    info:'Esta é uma <strong>pergunta participativa</strong>! Todas as respostas são válidas. Sua opinião contribui para que os organizadores compreendam as prioridades da comunidade barcarenense.'},
@@ -1361,7 +1390,7 @@ const ACHIEVEMENTS = [
   {slug:'done',    emoji:'🍍',name:'Jornada Completa',       check:s=>s.qIdx>=16},
 ];
 
-// Patentes baseadas em ACERTOS (excluindo perguntas livres do bloco 4)
+
 const PATENTES = [
   {minAcertos:10,maxAcertos:12,emoji:'🏆',title:'Mestre do Festival',
    sub:'Você domina Barcarena de ponta a ponta! Parabéns!',cor:'rgba(255,193,7,0.15)'},
@@ -1373,8 +1402,6 @@ const PATENTES = [
    sub:'Bem-vindo à jornada! Continue aprendendo sobre Barcarena.',cor:'rgba(0,229,255,0.08)'},
 ];
 
-// Ranking vem do Banco de Dados, ordenado por XP e tempo médio de resposta
-// Cada item: {nome, xp, patente, isMe}
 
 const REINFORCE_CORRECT=['Correto! 🎯','Isso aí! ✨','Manda ver! 🔥','Arrasou! 💥','Sensacional! 🌟','Que memória! 🧠'];
 const REINFORCE_STREAK={2:'Sequência! 🔥',3:'Tá em chamas! 🔥🔥',4:'IMPARÁVEL! 🔥🔥🔥'};
@@ -1382,25 +1409,29 @@ const REINFORCE_SPEED=['Que velocidade! ⚡','Relâmpago! ⚡','Super rápido! �
 const REINFORCE_WRONG=['Quase! Confira a curiosidade 📚','Não dessa vez 🤔','Aprenda e vai na frente! 💪'];
 const REINFORCE_FREE=['Obrigado por participar! 🙏','Sua opinião conta muito! 🗳️','Barcarena te escuta! 💚'];
 
+
 let state={
   qIdx:0, nick:'Você',
+
   cadastro:{ nome:'', cpf:'', cidade:'' },
   xp:0, streak:0, maxStreak:0, correct:0, fastAns:0,
-  timer:null, timeLeft:15, answered:false,
+  timer:null, timeLeft:20, answered:false,
   answersLog:[], earnedAchs:new Set(),
   consecutiveWrong:0,
   shuffledAt5:false,
   pendingSabiaInfo:null,
   pendingNext:null,
-  blockCorrects:[0,0,0,0],  
-  block4IntroShown:false,    
-  completedGame:false,      
+  blockCorrects:[0,0,0,0],  // acertos por bloco (índice 0..3)
+  block4IntroShown:false,    // tela de transição do bloco 4 já exibida?
+  completedGame:false,       // jogador completou todos os blocos com sucesso?
 };
 
 
 const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
-function getPatente(correct){return PATENTES.find(p=>correct>=p.minAcertos);}
+function getPatente(correct){return PATENTES.find(p=>correct>=p.minAcertos)||PATENTES[PATENTES.length-1];}
 function getBlockMeta(blockIdx){return BLOCKS_META[blockIdx];}
+
+
 function toast(text,type=''){
   const el=document.createElement('div');
   el.className='toast-item'+(type?' toast-'+type:'');
@@ -1410,6 +1441,7 @@ function toast(text,type=''){
 }
 function haptic(p){if(navigator.vibrate)navigator.vibrate(p)}
 
+
 let audioCtx=null;
 let audioUnlocked=false;
 
@@ -1417,6 +1449,7 @@ function unlockAudio(){
   if(audioUnlocked)return;
   try{
     audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+
     if(audioCtx.state==='suspended') audioCtx.resume();
     audioUnlocked=true;
   }catch(e){}
@@ -1433,6 +1466,7 @@ function playSound(type){
   try{
     const ctx=getAudio();const g=ctx.createGain();g.connect(ctx.destination);
     if(type==='correct'){
+
       const festNotes = [262, 330, 392, 523, 659, 784, 1047];
       const festGap   = 0.045; // 45ms — expansivo, cada nota respira
       const festTypes = ['sine','sine','triangle','sine','triangle','sine','sine'];
@@ -1442,12 +1476,14 @@ function playSound(type){
         osc.connect(g);
         osc.frequency.value = freq;
         const t = ctx.currentTime + i * festGap;
+
         const vol = i < 4 ? 0.14 + i * 0.02 : 0.20 - (i - 4) * 0.02;
         g.gain.setValueAtTime(vol, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
         osc.start(t);
         osc.stop(t + 0.15);
       });
+
       [2093, 2637].forEach((freq, i) => {
         const ping = ctx.createOscillator();
         ping.type = 'sine'; ping.connect(g);
@@ -1458,6 +1494,7 @@ function playSound(type){
         ping.start(pt); ping.stop(pt + 0.10);
       });
     }else if(type==='wrong'){
+
       [[466, 0], [392, 0.12]].forEach(([freq, delay]) => {
         const o = ctx.createOscillator();
         o.type = 'sine'; o.connect(g); o.frequency.value = freq;
@@ -1493,7 +1530,7 @@ function playSound(type){
       g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.5);
       o.start(ctx.currentTime);o.stop(ctx.currentTime+.52);
     }else if(type==='block'){
-      // Fanfarra de transição de bloco
+
       [440,550,660,880].forEach((f,i)=>{
         const o=ctx.createOscillator();o.type='sine';o.connect(g);o.frequency.value=f;
         g.gain.setValueAtTime(0.14,ctx.currentTime+i*.08);
@@ -1503,6 +1540,8 @@ function playSound(type){
     }
   }catch(e){}
 }
+
+
 const canvas      = document.getElementById('confetti-canvas');
 const ctx2d       = canvas.getContext('2d');
 const feverCanvas = document.getElementById('fever-canvas');
@@ -1539,6 +1578,7 @@ function animateParticles(){
   if(particles.length>0) rafId=requestAnimationFrame(animateParticles);
   else{ rafId=null; ctx2d.clearRect(0,0,canvas.width,canvas.height); }
 }
+
 
 const FEVER_COLORS=['rgba(255,61,119,','rgba(255,140,0,','rgba(138,43,226,','rgba(255,193,7,'];
 const FEVER_SHAPES=['circle','diamond','triangle'];
@@ -1588,12 +1628,12 @@ let feverSpawnTimer=0;
 function animateFever(ts){
   fctx.clearRect(0,0,feverCanvas.width,feverCanvas.height);
   if(!feverActive&&feverParts.length===0){feverRaf=null;return;}
-  // Spawn a cada ~80ms
+
   if(feverActive&&ts-feverSpawnTimer>80){feverSpawnTimer=ts;spawnFeverPart();}
   feverParts=feverParts.filter(p=>p.y>-30&&p.alpha>0.01);
   for(const p of feverParts){
     p.x+=p.vx;p.y+=p.vy;p.rot+=p.rotV;
-    p.alpha-=feverActive?0.005:0.018; 
+    p.alpha-=feverActive?0.005:0.018; // desvanecem rápido quando fever acaba
     drawFeverPart(p);
   }
   feverRaf=requestAnimationFrame(animateFever);
@@ -1608,13 +1648,16 @@ function startFeverParticles(){
 function stopFeverParticles(){
   feverActive=false;
   feverCanvas.classList.remove('active');
+
 }
+
 
 function setLogoState(s){
   const logos=[document.getElementById('logo-topbar'),document.getElementById('logo-hero')].filter(Boolean);
   logos.forEach(l=>{l.classList.remove('logo-pulse','logo-sad','logo-fire');if(s)l.classList.add(s)});
   if(s)setTimeout(()=>logos.forEach(l=>l.classList.remove('logo-pulse','logo-sad','logo-fire')),1200);
 }
+
 
 function updateTopbar(){
   const el=document.getElementById('topbar-xp');
@@ -1630,6 +1673,7 @@ function showRecordBadge(){
   if(rec>0)wrap.innerHTML='<div style="text-align:center"><div class="record-badge">🏅 Seu recorde: '+rec+' XP</div></div>';
   else wrap.innerHTML='';
 }
+
 
 function openSabia(info, blockMeta, onNext){
   const overlay=document.getElementById('sabia-overlay');
@@ -1647,9 +1691,11 @@ function closeSabia(){
   }
 }
 document.getElementById('sabia-next').onclick=closeSabia;
+
 document.getElementById('sabia-overlay').addEventListener('click',function(e){
   if(e.target===this)closeSabia();
 });
+
 
 function updateBlockIndicator(){
   const q=ALL_QUESTIONS[state.qIdx]||ALL_QUESTIONS[ALL_QUESTIONS.length-1];
@@ -1661,6 +1707,7 @@ function updateBlockIndicator(){
     else if(i===currentBlock)dot.classList.add('active');
   }
 }
+
 
 const BLOCK_LEVELS = ['NÍVEL 1','NÍVEL 2','NÍVEL 3','NÍVEL 4 FINAL'];
 const BLOCK_ACCENTS = [
@@ -1674,11 +1721,14 @@ function showLevelUp(blockIdx, blkMeta, onDone){
   document.getElementById('level-up-sub').textContent  = blkMeta.emoji+' '+blkMeta.title;
   document.getElementById('level-up-badge').textContent = '4 novas perguntas · XP aguarda!';
 
+
   overlay.style.background = 'rgba(0,0,0,0.92)';
+
   overlay.classList.add('show');
   spawnConfetti(window.innerWidth/2, window.innerHeight*0.35, 60);
   playSound('block');
   haptic([50,30,200]);
+
 
   const btn = document.getElementById('level-up-continue');
   const handler = ()=>{
@@ -1687,6 +1737,8 @@ function showLevelUp(blockIdx, blkMeta, onDone){
     setTimeout(onDone, 200);
   };
   btn.addEventListener('click', handler);
+
+
   setTimeout(()=>{
     if(overlay.classList.contains('show')){
       overlay.classList.remove('show');
@@ -1695,6 +1747,7 @@ function showLevelUp(blockIdx, blkMeta, onDone){
     }
   }, 4000);
 }
+
 
 function calcXp(tl,isOk,streak,mult,isGold){
   if(!isOk)return{base:0,sBonus:0,speedBonus:0,catBonus:0,goldBonus:0,total:0};
@@ -1708,10 +1761,11 @@ function calcXp(tl,isOk,streak,mult,isGold){
   return{base,sBonus,speedBonus,catBonus,goldBonus,total};
 }
 
+
 function validarCPF(cpf){
   cpf = cpf.replace(/[^\d]/g,'');
   if(cpf.length !== 11) return false;
-  if(/^(\d)\1{10}$/.test(cpf)) return false; 
+  if(/^(\d)\1{10}$/.test(cpf)) return false; // todos os dígitos iguais
   let soma=0;
   for(let i=0;i<9;i++) soma += parseInt(cpf[i]) * (10-i);
   let resto = (soma*10) % 11;
@@ -1725,7 +1779,6 @@ function validarCPF(cpf){
   return true;
 }
 
-// Máscara CPF 
 document.getElementById('input-cpf').addEventListener('input', e=>{
   let v = e.target.value.replace(/\D/g,'').slice(0,11);
   if(v.length>9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
@@ -1738,7 +1791,7 @@ document.getElementById('input-cpf').addEventListener('input', e=>{
 
 document.getElementById('cadastro-form').addEventListener('submit', e=>{
   e.preventDefault();
-  unlockAudio();
+  unlockAudio(); // destrava AudioContext na primeira interação real
 
   const nome   = document.getElementById('input-nome').value.trim();
   const cpfRaw = document.getElementById('input-cpf').value.trim();
@@ -1755,9 +1808,9 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   cpfInput.classList.remove('invalid');
   cpfErr.textContent = '';
 
-  // Armazena dados de cadastro no estado — Envio de uma API ou banco de dados
   state.cadastro = { nome, cpf:cpfRaw, cidade, timestamp:new Date().toISOString() };
-  state.nick = nome.split(' ')[0] || nome;
+  state.nick = nome.split(' ')[0] || nome; // primeiro nome para exibição no jogo
+
   registrarParticipante(state.cadastro);
 
   state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
@@ -1781,23 +1834,28 @@ function renderQ(){
   const q=ALL_QUESTIONS[state.qIdx];
   const blkMeta=getBlockMeta(q.block);
   const isFree=q.ans===-1;
-  const isGold=state.qIdx===ALL_QUESTIONS.length-1; 
+  const isGold=state.qIdx===ALL_QUESTIONS.length-1; // última = rodada de ouro
   const totalQ=ALL_QUESTIONS.length;
 
   updateBlockIndicator();
 
   document.body.classList.remove('theme-b0','theme-b1','theme-b2','theme-b3');
   if(!isGold) document.body.classList.add('theme-b'+q.block);
+
+
   if(state.qIdx>0 && ALL_QUESTIONS[state.qIdx-1].block !== q.block){
     document.body.classList.remove('golden');
     playSound('block');
+
     showLevelUp(q.block, blkMeta, ()=>{
-    _renderQContent(q, blkMeta, isFree, isGold, totalQ);
+      _renderQContent(q, blkMeta, isFree, isGold, totalQ);
     });
-    return;
+    return; // conteúdo será renderizado pelo callback do Level Up
   }
 
+
   _applyGoldenMode(isGold);
+
   _renderQContent(q, blkMeta, isFree, isGold, totalQ);
 }
 
@@ -1820,7 +1878,12 @@ function _renderQContent(q, blkMeta, isFree, isGold, totalQ){
   document.getElementById('q-cat-badge').textContent=blkMeta.emoji+' '+blkMeta.title;
   document.getElementById('q-counter').textContent=(state.qIdx+1)+' / '+totalQ;
   document.getElementById('prog-bar').style.width=Math.round((state.qIdx/totalQ)*100)+'%';
-  document.getElementById('q-block-label').textContent='Bloco '+(q.block+1)+' · '+(isFree?'Pergunta livre':'');
+  const obligQ = ALL_QUESTIONS.filter((_,i)=>i<state.qIdx&&ALL_QUESTIONS[i].ans!==-1).length;
+  const totalOblig = ALL_QUESTIONS.filter(x=>x.ans!==-1).length;
+  document.getElementById('q-block-label').textContent=
+    isFree
+    ? 'Rodada '+(q.block+1)+' · Participativa'
+    : 'Rodada '+(q.block+1)+' · Pergunta '+(obligQ+1)+' de '+totalOblig;
 
   const card=document.getElementById('q-card');
   card.classList.remove('slide-in','golden-card');void card.offsetWidth;
@@ -1847,13 +1910,16 @@ function _renderQContent(q, blkMeta, isFree, isGold, totalQ){
   });
 
   state.answered=false;
-  const timerSecs = isGold ? 22 : (state.streak >= 3 ? 25 : 30); 
+
+  const timerSecs = isGold ? 18 : (state.streak >= 3 ? 15 : 20); // 20s normal, 15s fever, 18s gold
   startTimer(timerSecs);
 }
+
 
 function updateStreakStrip(){
   [0,1,2].forEach(i=>{
     const f=document.getElementById('sf'+i);
+
     if(state.streak>i)f.classList.add('lit');else f.classList.remove('lit');
   });
   const mult=document.getElementById('streak-mult');
@@ -1897,6 +1963,7 @@ function updateStreakStrip(){
   }
 }
 
+
 function startTimer(seconds=15){
   clearInterval(state.timer);state.timeLeft=seconds;updateTimer(seconds);
   state.timer=setInterval(()=>{
@@ -1905,17 +1972,18 @@ function startTimer(seconds=15){
   },1000);
 }
 function updateTimer(maxSecs){
-  const base=maxSecs||(state.streak>=3?25:30); 
+
+  const base=maxSecs||(state.streak>=3?15:20); // 20s normal, 15s fever
   const pct=Math.max(0,Math.round(state.timeLeft/base*100));
   const fill=document.getElementById('timer-fill');const row=document.getElementById('timer-row');
   document.getElementById('timer-num').textContent=state.timeLeft;
   if(!row.classList.contains('fever')){
     fill.style.width=pct+'%';
-    fill.style.background=state.timeLeft>15?'#00C853':state.timeLeft>7?'#FF8C00':'#FF3D77';
+    fill.style.background=state.timeLeft>10?'#00C853':state.timeLeft>5?'#FF8C00':'#FF3D77'; // adjusted for 20s
   } else {
-    fill.style.width=pct+'%';
+    fill.style.width=pct+'%'; // cor controlada pelo .fever CSS
   }
-  if(state.timeLeft<=5&&state.timeLeft>0)row.classList.add('urgent');
+  if(state.timeLeft<=5&&state.timeLeft>0)row.classList.add('urgent'); // urgent nos últimos 5s
   else row.classList.remove('urgent');
 }
 function timeout(){
@@ -1925,6 +1993,7 @@ function timeout(){
   const isFree=q.ans===-1;
   if(!isFree){ playSound('timeout'); haptic([100,50,100]); }
   document.getElementById('timer-row').classList.remove('urgent');
+
 
   const timeoutOpts = document.getElementById('opts').querySelectorAll('.opt-btn');
   timeoutOpts.forEach((b,i)=>{
@@ -1941,8 +2010,10 @@ function timeout(){
   const blkMeta = getBlockMeta(q.block);
 
   if(isFree){
+
     setTimeout(advance, 400);
   } else {
+
     setTimeout(()=>openTimeoutModal(q, blkMeta), 600);
   }
 }
@@ -1953,6 +2024,8 @@ function openTimeoutModal(q, blkMeta){
   document.getElementById('tm-correct-answer').textContent = correctOpt;
 
   overlay.classList.add('show');
+
+
   const btnContinue = document.getElementById('tm-btn-continue');
   const btnRestart  = document.getElementById('tm-btn-restart');
 
@@ -1973,6 +2046,7 @@ function openTimeoutModal(q, blkMeta){
   btnRestart.addEventListener('click', handleRestart);
 }
 
+
 function answer(idx){
   if(state.answered)return;
   clearInterval(state.timer);state.answered=true;
@@ -1984,6 +2058,7 @@ function answer(idx){
   const isOk=isFree||(idx===q.ans);
   const isGold=state.qIdx===ALL_QUESTIONS.length-1;
   const xpR=calcXp(state.timeLeft,isOk,state.streak,blkMeta.mult,isGold);
+
   const currentOpts = document.getElementById('opts').querySelectorAll('.opt-btn');
   currentOpts.forEach((b,i)=>{
     b.disabled=true;
@@ -2026,11 +2101,14 @@ function answer(idx){
     showReinforce(msg);
     if(!isFree)toast('+'+xpR.total+' XP'+(isGold?' 🏆':''));
     checkAchievements();
+
+
     if(state.correct === 5 && !state.shuffledAt5){
       state.shuffledAt5 = true;
       const nextIdx = state.qIdx + 1;
       if(nextIdx < ALL_QUESTIONS.length){
         const remaining = ALL_QUESTIONS.splice(nextIdx);
+
         const byBlock = [[], [], [], []];
         remaining.forEach(q => byBlock[q.block].push(q));
         byBlock.forEach(arr => {
@@ -2048,8 +2126,12 @@ function answer(idx){
 
     state.answersLog.push({qIdx:state.qIdx,selected:idx,isOk,timeLeft:state.timeLeft,xp:xpR.total,isFree});
     updateTopbar();updateStats();updateStreakStrip();
+
+
     setTimeout(advance, isFree ? 400 : 600);
+
   } else {
+
     state.streak = Math.max(0, state.streak - 1);
     state.consecutiveWrong++;
     playSound('wrong'); haptic([100,50,100]);
@@ -2058,6 +2140,7 @@ function answer(idx){
 
     state.answersLog.push({qIdx:state.qIdx,selected:idx,isOk,timeLeft:state.timeLeft,xp:0,isFree});
     updateTopbar(); updateStats(); updateStreakStrip();
+
 
     setTimeout(() => openSabia(q.info, blkMeta, advance), 500);
   }
@@ -2085,14 +2168,16 @@ function checkAchievements(){
   });
 }
 
+
 function advance(){
   const justFinishedBlock = ALL_QUESTIONS[state.qIdx]?.block ?? -1;
   state.qIdx++;
 
-  const lastQOfBlock = [3, 7, 11];
+
+  const lastQOfBlock = [3, 7, 11]; // índices das últimas perguntas de B1, B2, B3
   if(justFinishedBlock <= 2 && lastQOfBlock.includes(state.qIdx - 1)){
     const blockAcertos = state.blockCorrects[justFinishedBlock];
-    if(blockAcertos < 3){
+    if(blockAcertos < 2){
       showBlockGameOver(justFinishedBlock, blockAcertos);
       return;
     }
@@ -2140,6 +2225,7 @@ function showBlock4Intro(onDone){
   };
   btn.addEventListener('click', handler);
 
+
   setTimeout(() => {
     if(overlay.classList.contains('show')){
       overlay.classList.remove('show');
@@ -2148,6 +2234,7 @@ function showBlock4Intro(onDone){
     }
   }, 6000);
 }
+
 
 function animateCounter(el,target,duration=1600){
   const start=performance.now();
@@ -2192,6 +2279,8 @@ function showResult(){
   document.getElementById('res-rank').textContent=patente.emoji;
   document.getElementById('res-title').textContent=patente.title+'!';
   document.getElementById('res-sub').textContent=state.nick+' — '+patente.sub;
+
+
   document.getElementById('res-patente-emoji').textContent=patente.emoji;
   document.getElementById('res-patente-title').textContent=patente.title;
   document.getElementById('res-acertos').innerHTML=
@@ -2199,6 +2288,7 @@ function showResult(){
   const xpEl=document.getElementById('res-xp');
   xpEl.textContent='0';
   setTimeout(()=>animateCounter(xpEl,state.xp,1600),200);
+
 
   const faixasEl=document.getElementById('rank-faixas');
   faixasEl.innerHTML=PATENTES.slice().reverse().map(p=>{
@@ -2209,18 +2299,23 @@ function showResult(){
     </div>`;
   }).join('');
 
+
   const pIdx=PATENTES.indexOf(patente);
   const nextPatente=PATENTES[pIdx-1];
   const rpEl=document.getElementById('rank-progress');
   if(nextPatente){
-    const cur=patente.minAcertos;const next=nextPatente.minAcertos;
-    const pct=Math.min(100,Math.round(((state.correct-cur)/(next-cur))*100));
+    const cur=patente.minAcertos;
+    const next=nextPatente.minAcertos;
+    const range=next-cur;
+    const progress=Math.max(0,state.correct-cur);
+    const pct=range>0?Math.min(100,Math.round((progress/range)*100)):0;
+    const faltam=Math.max(0,next-state.correct);
     rpEl.innerHTML=`<div class="rank-progress-label">
       <span>${patente.emoji} ${patente.title}</span>
       <span>${nextPatente.emoji} ${nextPatente.title}</span>
     </div>
     <div class="rank-progress-track"><div class="rank-progress-fill" id="rpf" style="width:0%"></div></div>
-    <div class="rank-progress-next">Faltam ${next-state.correct} acertos para ${nextPatente.title}</div>`;
+    <div class="rank-progress-next">Faltam ${faltam} acerto${faltam===1?'':'s'} para ${nextPatente.title}</div>`;
     setTimeout(()=>{const rpf=document.getElementById('rpf');if(rpf)rpf.style.width=pct+'%'},400);
   } else {
     rpEl.innerHTML='<div class="rank-progress-next" style="color:var(--accent2);font-weight:700;text-align:center">🏆 Patente máxima alcançada!</div>';
@@ -2233,6 +2328,7 @@ function showResult(){
     cidadaoEl.style.display = 'none';
   }
 
+
   const snap={xp:state.xp,correct:state.correct,fastAns:state.fastAns,maxStreak:state.maxStreak,qIdx:state.qIdx};
   document.getElementById('ach-grid').innerHTML=ACHIEVEMENTS.map((a,i)=>{
     const earned=a.check(snap)||state.earnedAchs.has(a.slug);
@@ -2241,6 +2337,7 @@ function showResult(){
       <div class="ach-name">${earned?a.name:'???'}</div>
     </div>`;
   }).join('');
+
 
   const lbEl = document.getElementById('lb-card');
   lbEl.innerHTML = '<div class="lb-head">🏆 Ranking do Festival</div><div class="lb-loading">Carregando ranking...</div>';
@@ -2266,14 +2363,22 @@ function showResult(){
   updateTopbar();
 }
 
+
 function buildShareText(isChallenge){
   const p=getPatente(state.correct);
-  if(isChallenge)return `🍍 Conquistei a patente ${p.emoji} "${p.title}" no Quiz do Festival do Abacaxi de Barcarena!\n\n🏆 ${state.correct} acertos e ${state.xp} XP — você consegue superar?\n\n#FestivalDoAbacaxi #Barcarena #Desafio`;
-  return `🍍 Joguei o Quiz do Festival do Abacaxi de Barcarena!\n\nPatente: ${p.emoji} ${p.title}\n${state.correct} acertos · ${state.xp} XP\n\n#FestivalDoAbacaxi #Barcarena #Pará`;
+  const url='https://quiz-festival.vercel.app/';
+  if(isChallenge){
+    return `🍍 Acabei de descobrir o quanto conheço da nossa história! Conquistei o título de ${p.emoji} ${p.title} com ${state.xp} XP no Quiz do Festival do Abacaxi.\n\nSerá que você conhece Barcarena melhor do que eu? Vem testar seus conhecimentos e garantir seu Certificado! 👇\n\n🔗 Jogue agora: ${url}`;
+  }
+  return `🍍 Joguei o Quiz do Festival do Abacaxi de Barcarena!\n\nPatente: ${p.emoji} ${p.title}\n${state.correct} acertos · ${state.xp} XP\n\n🔗 ${url}\n\n#FestivalDoAbacaxi #Barcarena #Pará`;
 }
 function doShare(text,title){
-  if(navigator.share)navigator.share({title,text});
-  else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('📋 Copiado!'));
+  const url='https://quiz-festival.vercel.app/';
+  if(navigator.share){
+    navigator.share({title, text, url}).catch(()=>{});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>toast('📋 Link copiado!'));
+  }
 }
 
 document.getElementById('btn-cert-download').onclick=()=>{
@@ -2283,7 +2388,8 @@ document.getElementById('btn-cert-download').onclick=()=>{
     return;
   }
   toast('Gerando imagem...');
-  html2canvas(el, { backgroundColor:'#1A1430', scale:2 }).then(canvas=>{
+  const scale = window.devicePixelRatio > 1 ? 2 : 2;
+  html2canvas(el, { backgroundColor:'#1A1430', scale, useCORS:true, allowTaint:true, scrollX:0, scrollY:-window.scrollY, logging:false }).then(canvas=>{
     const link = document.createElement('a');
     const fileName = 'certificado-' + (state.cadastro.nome||'participante').replace(/\s+/g,'-').toLowerCase() + '.png';
     link.download = fileName;
@@ -2296,30 +2402,10 @@ document.getElementById('btn-cert-download').onclick=()=>{
 };
 
 
-document.getElementById('btn-cert-print').onclick=()=>{
-  window.print();
-};
-
-document.getElementById('btn-share').onclick=()=>doShare(buildShareText(false),'Quiz Festival do Abacaxi');
 document.getElementById('btn-challenge').onclick=()=>doShare(buildShareText(true),'Desafio — Quiz Festival do Abacaxi');
-document.getElementById('btn-review').onclick=()=>{
-  document.getElementById('review-list').innerHTML=state.answersLog.map(log=>{
-    const q=ALL_QUESTIONS[log.qIdx];const isFree=log.isFree||q.ans===-1;
-    const opts=q.opts.map((o,oi)=>{
-      let cls='';
-      if(isFree&&oi===log.selected)cls='was-free';
-      else if(!isFree&&oi===q.ans)cls='was-correct';
-      else if(!isFree&&oi===log.selected&&!log.isOk)cls='was-wrong';
-      return `<div class="review-opt ${cls}">${String.fromCharCode(65+oi)}. ${o}</div>`;
-    }).join('');
-    return `<div class="review-item ${isFree?'review-free':log.isOk?'review-ok':'review-fail'}">
-      <div class="review-q">${q.emoji} ${q.q} <span class="review-xp">${log.xp?'+'+log.xp+' XP':isFree?'📊 Livre':''}</span></div>
-      <div class="review-opts">${opts}</div>
-      <div class="review-info"><strong>💡 Você Sabia?</strong> ${q.info}</div>
-    </div>`;
-  }).join('');
-  showScreen('screen-review');
-};
+document.getElementById('btn-restart-home').onclick=()=>{ window.location.href='index.html'; };
+
+
 document.getElementById('btn-back').onclick=()=>showScreen('screen-result');
 document.getElementById('btn-replay').onclick=()=>{
   document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
@@ -2335,9 +2421,12 @@ document.getElementById('btn-replay').onclick=()=>{
 document.getElementById('go-retry-btn').onclick = () => {
   const overlay = document.getElementById('gameover-overlay');
   overlay.classList.remove('show');
+
   const failedBlock = ALL_QUESTIONS[state.qIdx - 1]?.block ?? 0;
+
   state.qIdx = failedBlock * 4;
   state.blockCorrects[failedBlock] = 0;
+
   state.streak = 0; state.consecutiveWrong = 0;
   updateTopbar(); updateStreakStrip();
   renderQ();
@@ -2372,8 +2461,11 @@ function fullRestart(){
 
 
 function restartQuiz(){
+
   setTimeout(fullRestart, 50);
 }
+
+
 function goHome(){
   clearInterval(state.timer);
   document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
@@ -2386,6 +2478,7 @@ function goHome(){
   showScreen('screen-intro');
 }
 
+
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -2393,22 +2486,24 @@ function showScreen(id){
   if(footer) footer.style.display = (id === 'screen-quiz') ? 'flex' : 'none';
 }
 
+
 showRecordBadge();
+
 (function(){
   const topbar = document.querySelector('.topbar');
   if(!topbar) return;
   let lastY = 0, ticking = false;
-  const THRESHOLD = 8;
+  const THRESHOLD = 8; // px mínimos para disparar
   window.addEventListener('scroll', ()=>{
     if(!ticking){
       requestAnimationFrame(()=>{
         const y = window.scrollY;
         if(y > lastY + THRESHOLD){
-          topbar.classList.add('hidden');    
+          topbar.classList.add('hidden');    // rolando para baixo: esconde
         } else if(y < lastY - THRESHOLD){
-          topbar.classList.remove('hidden');
+          topbar.classList.remove('hidden'); // rolando para cima: mostra
         }
-        if(y < 10) topbar.classList.remove('hidden'); 
+        if(y < 10) topbar.classList.remove('hidden'); // no topo: sempre visível
         lastY = y;
         ticking = false;
       });
