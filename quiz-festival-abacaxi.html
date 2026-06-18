@@ -22,7 +22,6 @@
   --radius:16px;--radius-sm:10px;--radius-pill:50px;
   --gold-bg:#1A150A;--gold-bg2:#2C220A;
 }
-/* ── Temas por bloco (transição suave de ambiente) ── */
 body.theme-b0{--bg:#110D1F;--bg2:#1F183B;--bg-glass:rgba(31,24,59,0.82)}
 body.theme-b1{--bg:#1A0D16;--bg2:#2D1522;--bg-glass:rgba(45,21,34,0.82)}
 body.theme-b2{--bg:#0A1A14;--bg2:#122E25;--bg-glass:rgba(18,46,37,0.82)}
@@ -1018,7 +1017,7 @@ body.golden{background:var(--gold-bg)}
     <form id="cadastro-form" class="cadastro-form" autocomplete="off">
       <div class="field-wrap">
         <label for="input-nome">Nome completo</label>
-        <input id="input-nome" type="text" maxlength="60" required>
+        <input id="input-nome" type="text" placeholder="Nome" maxlength="60" required>
       </div>
       <div class="field-wrap">
         <label for="input-cpf">CPF</label>
@@ -1027,10 +1026,10 @@ body.golden{background:var(--gold-bg)}
       </div>
       <div class="field-wrap">
         <label for="input-cidade">Cidade</label>
-        <input id="input-cidade" type="text" placeholder="Ex: Barcarena" maxlength="40" required>
+        <input id="input-cidade" type="text" placeholder=" Barcarena" maxlength="40" required>
       </div>
       <p class="privacy-note">🔒 Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros.</p>
-      <button type="submit" class="btn-primary" id="btn-start">Iniciar jornada 🍍</button>
+      <button type="submit" class="btn-primary" id="btn-start">Iniciar jornada </button>
     </form>
   </div>
 
@@ -1666,12 +1665,26 @@ function updateTopbar(){
   if(state.streak>=2){sb.textContent=state.streak+'🔥';sb.classList.add('visible')}
   else sb.classList.remove('visible');
 }
-function loadRecord(){return parseInt(localStorage.getItem('quiz-record')||'0')}
-function saveRecord(v){if(v>loadRecord())localStorage.setItem('quiz-record',v)}
+function _recordKey(){
+  const cpf=(state.cadastro&&state.cadastro.cpf)||'';
+  return cpf?'quiz-rec-'+cpf.replace(/[^0-9]/g,''):'';
+}
+function loadRecord(){
+  const k=_recordKey();
+  return k?parseInt(localStorage.getItem(k)||'0'):0;
+}
+function saveRecord(v){
+  const k=_recordKey();
+  if(!k)return;
+  if(v>loadRecord())localStorage.setItem(k,v);
+}
 function showRecordBadge(){
-  const rec=loadRecord();const wrap=document.getElementById('record-wrap');
-  if(rec>0)wrap.innerHTML='<div style="text-align:center"><div class="record-badge">🏅 Seu recorde: '+rec+' XP</div></div>';
-  else wrap.innerHTML='';
+  const wrap=document.getElementById('record-wrap');
+  if(!wrap)return;
+  const rec=loadRecord();
+  wrap.innerHTML=rec>0
+    ?'<div style="text-align:center"><div class="record-badge">🏅 Seu recorde: '+rec+' XP</div></div>'
+    :'';
 }
 
 
