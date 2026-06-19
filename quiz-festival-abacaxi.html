@@ -501,7 +501,7 @@ body.golden{background:var(--gold-bg)}
 .review-info{font-size:12px;color:var(--text2);margin-top:7px;padding-top:7px;border-top:0.5px solid var(--border);line-height:1.6}
 .review-xp{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:800;color:var(--accent2);float:right}
 
-#toast{position:fixed;top:68px;right:12px;z-index:999;pointer-events:none;display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+#toast{position:fixed;top:68px;right:12px;z-index:1200;pointer-events:none;display:flex;flex-direction:column;gap:5px;align-items:flex-end}
 .toast-item{
   background:var(--grad-hot);color:#fff;
   font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;
@@ -644,13 +644,14 @@ body.golden{background:var(--gold-bg)}
 .crie-logo-img{height:52px;width:auto;object-fit:contain;background:transparent;display:block}
 
 .quiz-footer{
-  display:flex;gap:8px;justify-content:center;
+  display:none;gap:8px;justify-content:center;
   padding:12px 18px 20px;margin-top:auto;
-  background:rgba(10,7,20,0.6);
+  background:rgba(10,7,20,0.85);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-top:0.5px solid rgba(255,255,255,0.06);
   border-radius:0 0 var(--radius) var(--radius);
   transition:opacity .3s ease;
+  position:sticky;bottom:0;z-index:10;
 }
 .footer-btn{
   flex:1;max-width:180px;padding:10px 12px;
@@ -954,6 +955,7 @@ body.golden{background:var(--gold-bg)}
 </style>
 </head>
 <body class="theme-b0">
+<div id="toast"></div>
 <canvas id="confetti-canvas"></canvas>
 <canvas id="fever-canvas"></canvas>
 
@@ -969,7 +971,7 @@ body.golden{background:var(--gold-bg)}
 <div class="sabia-overlay" id="sabia-overlay" role="dialog" aria-modal="true" aria-label="Você Sabia?">
   <div class="sabia-modal">
     <div class="sabia-block-tag" id="sabia-block-tag"></div>
-    <div class="sabia-seal">💡 Você Sabia?</div>
+    <div class="sabia-seal"> Você Sabia? 💡 </div>
     <div class="sabia-info" id="sabia-info"></div>
     <button class="sabia-next" id="sabia-next">Próxima pergunta →</button>
   </div>
@@ -988,8 +990,7 @@ body.golden{background:var(--gold-bg)}
       <div class="topbar-xp" id="topbar-xp" style="display:none">0 XP</div>
     </div>
   </div>
-  <div id="toast"></div>
-  <div class="app-content-offset" id="topbar-offset" aria-hidden="true" style="display:none"></div>
+    <div class="app-content-offset" id="topbar-offset" aria-hidden="true" style="display:none"></div>
 
   <!-- ══ INTRO ══ -->
   <div class="screen active" id="screen-intro">
@@ -1081,15 +1082,15 @@ body.golden{background:var(--gold-bg)}
       </div>
       <div class="field-wrap">
         <label for="input-cidade">Cidade</label>
-        <input id="input-cidade" type="text" placeholder="Barcarena" maxlength="40" required>
+        <input id="input-cidade" type="text" placeholder=" Barcarena " maxlength="40" required>
       </div>
       <div class="field-wrap">
         <label for="input-tel">Celular</label>
         <input id="input-tel" type="tel" inputmode="numeric" placeholder="(91) 9 0000-0000" maxlength="16" required autocomplete="off">
         <span class="field-error" id="tel-error"></span>
       </div>
-      <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros. 🔒</p>
-      <button type="submit" class="btn-primary" id="btn-start">Iniciar jornada</button>
+      <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros. 🔒 </p>
+      <button type="submit" class="btn-primary" id="btn-start"> Iniciar jornada </button>
     </form>
   </div>
 
@@ -1339,10 +1340,11 @@ async function verificarParticipante(cadastro){
   const sb=getSupabase();
   if(!sb) return {podeJogar:true, mensagem:''};
   try{
-    const {data,error}=await sb.from('participantes')
+    const query=sb.from('participantes')
       .select('id,nome,completou')
       .eq('cpf',cadastro.cpf)
       .limit(1);
+    const {data,error}=await Promise.race([query,timeout]);
     if(error||!data||data.length===0) return {podeJogar:true,mensagem:''};
     const p=data[0];
     if(p.completou){
@@ -2242,6 +2244,7 @@ function updateStreakStrip(){
 }
 
 
+function stopTimer(){clearInterval(state.timer);state.timeLeft=0;}
 function startTimer(seconds=15){
   clearInterval(state.timer);state.timeLeft=seconds;updateTimer(seconds);
   state.timer=setInterval(()=>{
@@ -2330,7 +2333,8 @@ function answer(idx){
   state._answerLock=true;
   setTimeout(()=>{state._answerLock=false;},800);
   clearInterval(state.timer);state.answered=true;
-  document.getElementById('timer-row').classList.remove('urgent');
+  document.getElementById('timer-row').classList.remove('urgent','fever');
+  document.getElementById('timer-fill').style.width='';
 
   const q=ALL_QUESTIONS[state.qIdx];
   const blkMeta=getBlockMeta(q.block);
@@ -2456,8 +2460,10 @@ function advance(){
   state.qIdx++;
 
 
-  const lastQOfBlock = [3, 7, 11]; // índices das últimas perguntas de B1, B2, B3
-  if(justFinishedBlock <= 2 && lastQOfBlock.includes(state.qIdx - 1)){
+  const isLastOfBlock = justFinishedBlock <= 2 &&
+    !ALL_QUESTIONS[state.qIdx] ||
+    (ALL_QUESTIONS[state.qIdx] && ALL_QUESTIONS[state.qIdx].block !== justFinishedBlock);
+  if(justFinishedBlock <= 2 && isLastOfBlock){
     const blockAcertos = state.blockCorrects[justFinishedBlock];
     if(blockAcertos < 2){
       showBlockGameOver(justFinishedBlock, blockAcertos);
@@ -2465,7 +2471,8 @@ function advance(){
     }
   }
 
-  if(state.qIdx === 12 && !state.block4IntroShown){
+  const nextQ=ALL_QUESTIONS[state.qIdx];
+  if(nextQ && nextQ.block===3 && !state.block4IntroShown && justFinishedBlock!==3){
     state.block4IntroShown = true;
     showBlock4Intro(() => renderQ());
     return;
@@ -2756,6 +2763,7 @@ function restartQuiz(){
 function goHome(){
   clearInterval(state.timer);
   state.answered=false; state._answerLock=false;
+  stopFeverParticles();
   document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
   document.body.classList.add('theme-b0');
   document.querySelector('.app').classList.remove('fever-mode');
@@ -2776,7 +2784,7 @@ function showScreen(id){
   const topbar = document.getElementById('topbar');
   const xpEl   = document.getElementById('topbar-xp');
   const stEl   = document.getElementById('topbar-streak');
-  if(footer) footer.style.display = inQuiz ? 'flex' : 'none';
+  if(footer){ footer.style.display = inQuiz ? 'flex' : 'none'; }
   if(topbar) topbar.style.display = inQuiz ? 'flex' : 'none';
   const offset = document.getElementById('topbar-offset');
   if(offset) offset.style.display = inQuiz ? '' : 'none';
@@ -2860,7 +2868,7 @@ _el('conta-modal-overlay').addEventListener('click', e=>{
 
 _el('conta-buscar').addEventListener('click', async ()=>{
   const nome   = _el('conta-nome').value.trim();
-  const cpfRaw = _el('conta-cpf').value.replace(/\D/g,'');
+  const cpfRaw = _el('conta-cpf').value.replace(/[^0-9]/g,'');
   const errEl  = _el('conta-cpf-error');
   errEl.textContent='';
   _el('conta-resultado').classList.remove('show');
@@ -2878,10 +2886,11 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     return;
   }
   try{
+    const cpfFormatado = cpfRaw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
     const {data,error}=await sb
       .from('participantes')
       .select('nome,xp,acertos,patente,completou')
-      .eq('cpf',cpfRaw)
+      .or('cpf.eq.'+cpfRaw+',cpf.eq.'+cpfFormatado)
       .limit(1);
 
     btn.disabled=false; btn.textContent='Consultar →';
