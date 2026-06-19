@@ -900,9 +900,57 @@ body.golden{background:var(--gold-bg)}
 @keyframes reinforcePop{0%{opacity:0;transform:translateY(6px) scale(.95)}100%{opacity:1;transform:translateY(0) scale(1)}}
 .reinforce-msg:not(:empty){animation:reinforcePop .25s ease forwards}
 
-.crie-hero-link{display:flex;justify-content:center;margin:0 auto 20px;text-decoration:none;transition:opacity .25s}
-.crie-hero-link:hover{opacity:.8}
-.crie-hero-img{display:block}
+
+.btn-minha-conta{
+  position:fixed;top:14px;right:16px;z-index:900;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);
+  border-radius:50%;width:42px;height:42px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;backdrop-filter:blur(6px);transition:background .2s;
+  color:#fff;font-size:20px;
+}
+.btn-minha-conta:hover{background:rgba(255,255,255,0.18)}
+.btn-minha-conta.visible{display:flex}
+
+.conta-modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.conta-modal-overlay.show{display:flex}
+.conta-modal{
+  background:#1a1a2e;border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px;padding:28px 24px;width:90%;max-width:360px;
+  position:relative;
+}
+.conta-modal-title{
+  font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;
+  color:#fff;margin-bottom:6px;text-align:center;
+}
+.conta-modal-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:20px}
+.conta-modal .field-wrap{margin-bottom:14px}
+.conta-modal-close{
+  position:absolute;top:14px;right:16px;
+  background:none;border:none;color:var(--text3);font-size:22px;
+  cursor:pointer;line-height:1;padding:0;
+}
+.conta-resultado{
+  background:rgba(255,255,255,0.05);border-radius:12px;
+  padding:16px;margin-top:16px;display:none;
+}
+.conta-resultado.show{display:block}
+.conta-res-nome{font-size:15px;font-weight:700;color:#fff;margin-bottom:10px;text-align:center}
+.conta-res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.conta-res-item{background:rgba(255,255,255,0.07);border-radius:10px;padding:10px;text-align:center}
+.conta-res-val{font-size:20px;font-weight:800;color:var(--accent2)}
+.conta-res-lbl{font-size:11px;color:var(--text3);margin-top:2px}
+.conta-res-patente{
+  text-align:center;margin-top:10px;font-size:13px;
+  color:var(--accent2);font-weight:700;
+}
+.conta-res-status{
+  text-align:center;margin-top:8px;font-size:12px;color:var(--text3);
+}
 </style>
 </head>
 <body class="theme-b0">
@@ -953,34 +1001,6 @@ body.golden{background:var(--gold-bg)}
       <p>Uma jornada de descoberta por Barcarena. Responda rápido, acumule XP e conquiste sua patente!</p>
     </div>
 
-    <a class="crie-hero-link" href="https://www.criebarcarena.com/quiz" target="_blank" rel="noopener" aria-label="CrieBarcarena — Centro de Referência da Inovação e Empreendedorismo">
-      <svg width="260" height="80" viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CrieBarcarena — Centro de Referência da Inovação e Empreendedorismo">
-<defs>
-<radialGradient id="cgb" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3bb7f0"/><stop offset="100%" stop-color="#1260b0"/></radialGradient>
-<linearGradient id="cgf" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff176"/><stop offset="40%" stop-color="#ff8c00"/><stop offset="100%" stop-color="#ff3300" stop-opacity="0"/></linearGradient>
-</defs>
-<circle cx="100" cy="100" r="76" fill="url(#cgb)"/>
-<circle cx="100" cy="100" r="76" fill="none" stroke="#0d47a1" stroke-width="2.5"/>
-<circle cx="56"  cy="62"  r="2.8" fill="white"><animate attributeName="opacity" values="0.9;0.1;0.9" dur="1.7s" repeatCount="indefinite"/></circle>
-<circle cx="138" cy="52"  r="2.2" fill="white"><animate attributeName="opacity" values="0.8;0.15;0.8" dur="2.2s" repeatCount="indefinite"/></circle>
-<circle cx="152" cy="105" r="1.8" fill="white"><animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.4s" repeatCount="indefinite"/></circle>
-<circle cx="48"  cy="118" r="2"   fill="white"><animate attributeName="opacity" values="0.85;0.1;0.85" dur="1.9s" repeatCount="indefinite"/></circle>
-<circle cx="100" cy="148" r="1.6" fill="white"><animate attributeName="opacity" values="0.6;0.1;0.6" dur="1.3s" repeatCount="indefinite"/></circle>
-<g>
-<animateMotion dur="5s" repeatCount="indefinite" rotate="auto"><mpath href="#cgorbit"/></animateMotion>
-<ellipse cx="-16" cy="0" rx="12" ry="4" fill="url(#cgf)" transform="rotate(90 -16 0)"><animate attributeName="ry" values="4;6;3;5;4" dur="0.2s" repeatCount="indefinite"/><animate attributeName="rx" values="12;15;9;13;12" dur="0.22s" repeatCount="indefinite"/></ellipse>
-<polygon points="20,0 -8,-9 -8,9" fill="#d0eeff"/>
-<polygon points="-8,-9 -18,-16 -12,-2" fill="#5bc4e8"/>
-<polygon points="-8,9 -18,16 -12,2" fill="#5bc4e8"/>
-<circle cx="6" cy="0" r="5.5" fill="#0d47a1" opacity="0.95"/>
-<circle cx="6" cy="0" r="3.5" fill="#3bb7f0"/>
-<circle cx="6" cy="0" r="1.8" fill="#e0f7ff"/>
-</g>
-<path id="cgorbit" d="M100,24 A76,76 0 1,1 99.9999,24" fill="none" stroke="none"/>
-<text x="196" y="88" font-family="Arial Black,Arial,sans-serif" font-size="38" font-weight="900" fill="#1a8ad4">Crie<tspan fill="#1b7c2e">Barcarena</tspan></text>
-<text x="197" y="112" font-family="Arial,sans-serif" font-size="12.5" fill="#c0392b" letter-spacing="0.2">Centro de Referência da Inovação e Empreendedorismo</text>
-</svg>
-    </a>
 
     <div id="record-wrap"></div>
 
@@ -1063,8 +1083,13 @@ body.golden{background:var(--gold-bg)}
         <label for="input-cidade">Cidade</label>
         <input id="input-cidade" type="text" placeholder="Barcarena" maxlength="40" required>
       </div>
+      <div class="field-wrap">
+        <label for="input-tel">Celular</label>
+        <input id="input-tel" type="tel" inputmode="numeric" placeholder="(91) 9 0000-0000" maxlength="16" required autocomplete="off">
+        <span class="field-error" id="tel-error"></span>
+      </div>
       <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros. 🔒</p>
-      <button type="submit" class="btn-primary" id="btn-start">Iniciar jornada </button>
+      <button type="submit" class="btn-primary" id="btn-start">Iniciar jornada</button>
     </form>
   </div>
 
@@ -1244,6 +1269,48 @@ body.golden{background:var(--gold-bg)}
 </div>
 </div><!-- /app -->
 
+<!-- ══ BOTÃO MINHA CONTA ══ -->
+<button class="btn-minha-conta" id="btn-minha-conta" aria-label="Minha conta — ver pontuação" title="Minha conta" style="display:flex">
+  👤
+</button>
+
+<!-- ══ MODAL MINHA CONTA ══ -->
+<div class="conta-modal-overlay" id="conta-modal-overlay" role="dialog" aria-modal="true" aria-label="Consultar pontuação">
+  <div class="conta-modal">
+    <button class="conta-modal-close" id="conta-modal-close" aria-label="Fechar">✕</button>
+    <div class="conta-modal-title"> Minha Conta 👤 </div>
+    <div class="conta-modal-sub">Digite seu nome e CPF para ver sua pontuação</div>
+
+    <div class="field-wrap">
+      <label for="conta-nome">Nome completo</label>
+      <input id="conta-nome" type="text" placeholder="Nome" maxlength="60">
+    </div>
+    <div class="field-wrap">
+      <label for="conta-cpf">CPF</label>
+      <input id="conta-cpf" type="tel" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
+      <span class="field-error" id="conta-cpf-error"></span>
+    </div>
+
+    <button class="btn-primary" id="conta-buscar" style="width:100%;margin-top:4px">Consultar →</button>
+
+    <div class="conta-resultado" id="conta-resultado">
+      <div class="conta-res-nome" id="conta-res-nome"></div>
+      <div class="conta-res-grid">
+        <div class="conta-res-item">
+          <div class="conta-res-val" id="conta-res-xp">—</div>
+          <div class="conta-res-lbl">XP Total</div>
+        </div>
+        <div class="conta-res-item">
+          <div class="conta-res-val" id="conta-res-acertos">—</div>
+          <div class="conta-res-lbl">Acertos</div>
+        </div>
+      </div>
+      <div class="conta-res-patente" id="conta-res-patente"></div>
+      <div class="conta-res-status" id="conta-res-status"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 
 
@@ -1268,6 +1335,26 @@ function getSupabase(){
 }
 
 
+async function verificarParticipante(cadastro){
+  const sb=getSupabase();
+  if(!sb) return {podeJogar:true, mensagem:''};
+  try{
+    const {data,error}=await sb.from('participantes')
+      .select('id,nome,completou')
+      .eq('cpf',cadastro.cpf)
+      .limit(1);
+    if(error||!data||data.length===0) return {podeJogar:true,mensagem:''};
+    const p=data[0];
+    if(p.completou){
+      return {podeJogar:false,mensagem:`Olá! Identificamos que você (${p.nome}) já participou e completou o quiz. Cada CPF pode jogar apenas uma vez. Obrigado pela participação! 🍍`};
+    }
+    return {podeJogar:true,mensagem:'',atualizarId:p.id};
+  }catch(e){
+    console.error('[Quiz] Erro ao verificar participante:',e);
+    return {podeJogar:true,mensagem:''};
+  }
+}
+
 async function registrarParticipante(cadastro, tentativa=1){
   const sb = getSupabase();
   if(!sb){ console.log('[Quiz] Cadastro local (sem Supabase) — CPF omitido por privacidade'); return; }
@@ -1275,6 +1362,7 @@ async function registrarParticipante(cadastro, tentativa=1){
     const { error } = await sb.from('participantes').insert({
       nome:        cadastro.nome,
       cpf:         cadastro.cpf,
+      telefone:    cadastro.telefone||'',
       cidade:      cadastro.cidade,
       criado_em:   cadastro.timestamp,
       xp:          0,
@@ -1391,77 +1479,130 @@ const BLOCKS_META = [
 ];
 
 
-const ALL_QUESTIONS = [
+const QUESTION_BANK = [
   {block:0,emoji:'🍍',q:'Qual é o principal produto agrícola homenageado pelo Festival do Abacaxi?',
    opts:['Açaí','Mandioca','Abacaxi','Cupuaçu'],ans:2,
-   info:'O abacaxi é o fruto símbolo de Barcarena! A cidade é carinhosamente chamada de <strong>"Terra do Abacaxi"</strong> e cerca de 10.000 famílias vivem de sua produção, com uma safra de aproximadamente 700 mil frutos por ano.'},
+   info:'O abacaxi cultivado em Barcarena é famoso pela qualidade e doçura, sendo símbolo do município e do festival com mais de 40 edições.'},
   {block:0,emoji:'📅',q:'Em qual período o Festival do Abacaxi de Barcarena tradicionalmente ocorre?',
    opts:['Janeiro/Fevereiro','Maio/Junho','Setembro/Outubro','Novembro/Dezembro'],ans:2,
-   info:'O festival ocorre tradicionalmente em <strong>setembro/outubro</strong> no Ecoparque do Cafezal. Já são mais de 40 edições celebrando a cultura e a identidade de Barcarena.'},
-  {block:0,emoji:'🏭',q:'Barcarena é reconhecida nacionalmente por qual atividade econômica?',
-   opts:['Pecuária','Mineração e logística portuária','Produção de café','Turismo de neve'],ans:1,
-   info:'O <strong>Porto de Vila do Conde</strong> faz de Barcarena um dos maiores polos de exportação do Norte do Brasil, escoando caulim, alumina e alumínio para o mundo inteiro.'},
-  {block:0,emoji:'📜',q:'Em que ano o Festival do Abacaxi foi tombado como Patrimônio Cultural Artístico do Pará?',
+   info:'O festival ocorre tradicionalmente em setembro/outubro no Ecoparque do Cafezal. Já são mais de 40 edições celebrando a cultura e a identidade de Barcarena.'},
+  {block:0,emoji:'🏘️',q:'Como Barcarena se desenvolveu historicamente?',
+   opts:['A partir de missões jesuítas','A partir de comunidades ribeirinhas','Por colonização europeia direta','Por projeto militar'],ans:1,
+   info:'A ocupação do território começou com pequenos povoados às margens dos rios e igarapés, as principais "estradas" da região amazônica.'},
+  {block:0,emoji:'⛪',q:'Qual elemento histórico ajudou a organizar os primeiros núcleos de Barcarena?',
+   opts:['Missões religiosas','Companhias mineradoras','Exército imperial','Fazendas de gado'],ans:0,
+   info:'A presença de religiosos ajudou a organizar núcleos de povoamento, consolidando comunidades e estruturas básicas de sociabilidade e comércio.'},
+  {block:0,emoji:'🚢',q:'O que foi fundamental para o crescimento histórico de Barcarena antes das rodovias?',
+   opts:['Ferrovias','Os rios','Aeroportos','Estradas de barro'],ans:1,
+   info:'Antes das rodovias, os rios eram o principal meio de transporte de pessoas, mercadorias, alimentos e notícias, conectando Barcarena a Belém.'},
+  {block:0,emoji:'🏭',q:'O que colocou Barcarena no mapa econômico nacional a partir da 2ª metade do século XX?',
+   opts:['O turismo de praias','Grandes projetos industriais de mineração','A indústria têxtil','A exportação de açaí'],ans:1,
+   info:'Grandes empreendimentos ligados à mineração e metalurgia colocaram Barcarena no mapa econômico do Brasil a partir dos anos 1980.'},
+  {block:0,emoji:'🔀',q:'O que a história de Barcarena reúne de forma única?',
+   opts:['Só a Amazônia tradicional','Só a Amazônia industrializada','Amazônia tradicional e industrializada','Apenas agronegócio'],ans:2,
+   info:'No mesmo território convivem comunidades tradicionais, modos de vida ribeirinhos e grandes plantas industriais de alta tecnologia.'},
+  {block:0,emoji:'📜',q:'Em que ano o Festival do Abacaxi foi tombado como Patrimônio Cultural do Pará?',
    opts:['2005','2009','2012','2015'],ans:1,
-   info:'Em <strong>17 de novembro de 2009</strong>, pela Lei Estadual nº 7.336, o Festival do Abacaxi foi formalmente reconhecido como Patrimônio Cultural Artístico do Estado do Pará.'},
+   info:'O tombamento em 2009 reconheceu o festival como patrimônio imaterial do estado, valorizando a tradição e cultura de Barcarena.'},
+  {block:0,emoji:'⛵',q:'Como a navegação fluvial ainda se relaciona com o cotidiano de Barcarena?',
+   opts:['Já foi extinta','Preserva traços históricos nas comunidades','Só existe nos museus','É usada apenas industrialmente'],ans:1,
+   info:'Muitos trajetos, costumes e rotinas atuais guardam semelhanças com práticas que existem há décadas, especialmente nas comunidades ribeirinhas.'},
+  {block:0,emoji:'🌎',q:'Contar a história de Barcarena é também discutir o futuro de quê?',
+   opts:['Apenas do Pará','Da Amazônia','Do Brasil inteiro','Só do município'],ans:1,
+   info:'O que acontece em Barcarena — uso do território, investimentos, impactos e resistência — ajuda a entender os caminhos da Amazônia nas próximas décadas.'},
+
   {block:1,emoji:'🗺️',q:'Qual destes distritos pertence ao município de Barcarena?',
    opts:['Murinim','Vila dos Cabanos','Icoaraci','Quatro Bocas'],ans:1,
-   info:'<strong>Vila dos Cabanos</strong> é um importante distrito de Barcarena, surgido junto ao Distrito Industrial e à instalação das grandes empresas de alumínio na região.'},
+   info:'Vila dos Cabanos é um distrito planejado de Barcarena, criado para abrigar trabalhadores das indústrias instaladas na região.'},
   {block:1,emoji:'🌊',q:'Qual rio tem grande importância para a economia de Barcarena?',
    opts:['Tocantins','Amazonas','Pará','Xingu'],ans:2,
-   info:'O <strong>Rio Pará</strong> é fundamental para o escoamento da produção industrial de Barcarena, conectando o Porto de Vila do Conde às rotas internacionais de exportação.'},
-  {block:1,emoji:'🏖️',q:'Qual é a praia mais conhecida de Barcarena, frequentada por moradores e turistas?',
+   info:'O Rio Pará banha Barcarena e é fundamental para o escoamento da produção industrial e o transporte de cargas e pessoas na região.'},
+  {block:1,emoji:'🏖️',q:'Qual é a praia mais conhecida de Barcarena?',
    opts:['Praia de Outeiro','Praia do Caripi','Praia do Maracanã','Praia de Salinópolis'],ans:1,
-   info:'A <strong>Praia do Caripi</strong> oferece belas paisagens fluviais e é um dos principais pontos de lazer e turismo de Barcarena, atraindo visitantes de toda a Região Metropolitana de Belém.'},
-  {block:1,emoji:'🎭',q:'Qual concurso de beleza faz parte da programação oficial do Festival do Abacaxi?',
-   opts:['Miss Amazônia','Princesa do Cafezal','Rainha do Festival do Abacaxi','Embaixatriz da Colheita'],ans:2,
-   info:'O concurso <strong>"Rainha do Festival do Abacaxi"</strong> é uma das tradições mais aguardadas, com candidatas de toda a região de Barcarena disputando o título durante as festividades.'},
-  {block:2,emoji:'📈',q:'Nos últimos anos, Barcarena ampliou seus investimentos em qual área?',
+   info:'A Praia do Caripi é um destino querido pelos barcarenenses, com suas águas do estuário amazônico e estrutura para lazer.'},
+  {block:1,emoji:'🎭',q:'Qual concurso de beleza faz parte do Festival do Abacaxi?',
+   opts:['Miss Amazônia','Princesa do Cafezal','Rainha do Festival','Embaixatriz da Colheita'],ans:1,
+   info:'A Princesa do Cafezal é uma das tradições mais antigas do festival, disputada por jovens que representam a identidade local.'},
+  {block:1,emoji:'🍽️',q:'A culinária de Barcarena é baseada principalmente em quê?',
+   opts:['Carnes grelhadas','Ingredientes amazônicos como peixe e mandioca','Comida italiana','Frutos do mar do litoral'],ans:1,
+   info:'Peixes de rio, mandioca, açaí, frutas regionais e ervas tradicionais fazem parte da mesa barcarenense — culinária profundamente amazônica.'},
+  {block:1,emoji:'🙏',q:'Como a fé popular se expressa em Barcarena?',
+   opts:['Apenas em igrejas formais','Em igrejas, casas e margens dos rios','Somente em festas juninas','Apenas por redes sociais'],ans:1,
+   info:'Promessas, orações, altares domésticos e procissões fluviais fazem parte do cotidiano — a espiritualidade transcende os espaços formais.'},
+  {block:1,emoji:'🌿',q:'O que os saberes tradicionais de Barcarena incluem?',
+   opts:['Somente tecnologia digital','Técnicas de pesca, plantas medicinais e manejo da terra','Apenas culinária','Construção civil moderna'],ans:1,
+   info:'Técnicas de pesca, manejo da terra, uso de plantas medicinais e práticas de cura fazem parte do patrimônio cultural imaterial do município.'},
+  {block:1,emoji:'🎵',q:'O que anima as festas e celebrações de Barcarena?',
+   opts:['Apenas música clássica','Sons regionais, aparelhagens e grupos locais','Somente samba carioca','Música estrangeira'],ans:1,
+   info:'Sons regionais, grupos locais, aparelhagens, bandas e manifestações culturais animam festejos religiosos, festas de rua e eventos comunitários.'},
+  {block:1,emoji:'👥',q:'O que caracteriza a mistura cultural de Barcarena?',
+   opts:['Influências apenas europeias','Influências indígenas, caboclas e religiosas','Apenas cultura africana','Somente influência industrial'],ans:1,
+   info:'Essa combinação aparece na fala, culinária, festas, crenças e formas de organização comunitária — uma identidade plural e rica.'},
+  {block:1,emoji:'🧓',q:'Como os saberes tradicionais são transmitidos em Barcarena?',
+   opts:['Apenas por livros','Por aplicativos digitais','Pela oralidade entre gerações','Somente em escolas'],ans:2,
+   info:'Histórias, causos, lendas e memórias familiares são transmitidos de geração em geração, reforçando a identidade local pela força da palavra.'},
+
+  {block:2,emoji:'📈',q:'Nos últimos anos, Barcarena ampliou investimentos em qual área?',
    opts:['Educação','Exploração espacial','Ferrovia internacional','Produção de petróleo'],ans:0,
-   info:'Entre 2021 e 2026, a Prefeitura realizou <strong>investimentos históricos na rede municipal de ensino</strong>, incluindo novas escolas, reformas e ampliação de vagas para crianças e jovens de Barcarena.'},
-  {block:2,emoji:'⚓',q:'Qual é o nome do principal porto de Barcarena, fundamental para as exportações do Norte do Brasil?',
+   info:'A modernização das escolas e ampliação do acesso à educação têm sido prioridade, preparando os barcarenenses para o século XXI.'},
+  {block:2,emoji:'⚓',q:'Qual é o nome do principal porto de Barcarena?',
    opts:['Porto de Belém','Porto de Vila do Conde','Porto de Santarém','Porto de Marabá'],ans:1,
-   info:'O <strong>Porto de Vila do Conde</strong> é um dos maiores terminais de exportação da Amazônia, responsável pelo escoamento de alumínio, alumina e caulim para mercados internacionais, movimentando bilhões em exportações anuais.'},
-  {block:2,emoji:'🏥',q:'Qual área está recebendo importantes investimentos da Prefeitura entre 2020 e 2026?',
-   opts:['Saúde','Energia nuclear','Teleféricos','Portos marítimos internacionais'],ans:0,
-   info:'Os investimentos em <strong>saúde pública</strong> têm ampliado o acesso da população a atendimentos, unidades de saúde e equipamentos modernos, beneficiando toda a comunidade barcarenense.'},
-  {block:2,emoji:'🌿',q:'Qual empresa multinacional em Barcarena apoia projetos de desenvolvimento sustentável local?',
+   info:'O Porto de Vila do Conde é um dos maiores terminais de exportação da Amazônia, responsável pelo escoamento de alumínio, alumina e caulim para mercados internacionais.'},
+  {block:2,emoji:'🏥',q:'Qual área recebeu importantes investimentos da Prefeitura entre 2020 e 2026?',
+   opts:['Saúde','Energia nuclear','Teleféricos','Portos internacionais'],ans:0,
+   info:'A ampliação de unidades de saúde, profissionais e equipamentos é fundamental para garantir qualidade de vida à população em crescimento.'},
+  {block:2,emoji:'🌿',q:'Qual empresa multinacional em Barcarena apoia projetos de desenvolvimento sustentável?',
    opts:['Vale','Hydro','Petrobras','Embraer'],ans:1,
-   info:'A <strong>Hydro</strong>, empresa norueguesa de alumínio, apoia a Iniciativa Barcarena Sustentável (IBS), com projetos de geração de renda, artesanato, gastronomia e fortalecimento cultural.'},
+   info:'A Hydro, empresa norueguesa presente em Barcarena, tem investido em programas socioambientais e de sustentabilidade em parceria com a comunidade local.'},
+  {block:2,emoji:'🏗️',q:'O crescimento industrial acelerou o que em Barcarena?',
+   opts:['A pesca artesanal','A urbanização e criação de novos bairros','A agricultura de subsistência','O turismo de neve'],ans:1,
+   info:'Novos bairros surgiram, a área urbana se expandiu e aumentou a demanda por habitação, transporte, educação, saúde e saneamento.'},
+  {block:2,emoji:'🌐',q:'Barcarena faz parte de qual região administrativa?',
+   opts:['Região metropolitana de Santarém','Região metropolitana de Belém','Interior do Marajó','Região do Tapajós'],ans:1,
+   info:'Sua proximidade com Belém e posição estratégica reforçam o papel de Barcarena como ponto importante na logística regional e metropolitana.'},
+  {block:2,emoji:'💼',q:'O que impulsiona fortemente o PIB de Barcarena?',
+   opts:['Somente a pesca','O setor industrial e portuário','Apenas o turismo','A exportação de açaí'],ans:1,
+   info:'A arrecadação de impostos, movimentação do comércio e geração de empregos são fortemente influenciados pelas atividades industriais e portuárias.'},
+  {block:2,emoji:'🤝',q:'Além da indústria, o que sustenta a renda de muitas famílias em Barcarena?',
+   opts:['Somente empregos industriais','Agricultura familiar, pesca e comércio local','Apenas mineração','Exclusivamente serviços governamentais'],ans:1,
+   info:'Agricultura familiar, pesca, comércio local, serviços e pequenas empresas também têm papel fundamental na renda de muitas famílias barcarenenses.'},
+  {block:2,emoji:'🌱',q:'Barcarena tem potencial para que tipo de turismo?',
+   opts:['Apenas turismo industrial','Turismo de natureza e base comunitária','Somente turismo de neve','Turismo de negócios internacionais'],ans:1,
+   info:'Rios, praias de água doce, paisagens amazônicas e modos de vida tradicionais podem ser base para um turismo que valorize cultura, ambiente e renda local.'},
+  {block:2,emoji:'🏘️',q:'Qual desafio Barcarena enfrenta por ser uma cidade em crescimento acelerado?',
+   opts:['Excesso de emprego','Pressão por moradia e mobilidade urbana','Problemas com neve','Falta de indústrias'],ans:1,
+   info:'Questões como ocupações irregulares, pressão por moradia, mobilidade urbana e necessidade de mais equipamentos públicos estão no cotidiano do município.'},
+
   {block:3,emoji:'🔮',q:'Qual tema você considera mais importante para o futuro de Barcarena?',
    opts:['Emprego e renda','Educação','Saúde','Infraestrutura'],ans:-1,
-   info:'Esta é uma <strong>pergunta participativa</strong>! Todas as respostas são válidas. Sua opinião contribui para que os organizadores compreendam as prioridades da comunidade barcarenense.'},
+   info:'Sua opinião é valiosa! Todos esses temas estão interligados no desenvolvimento de Barcarena.'},
   {block:3,emoji:'👶',q:'Qual faixa etária mais precisa de atenção nas políticas públicas de Barcarena?',
    opts:['Crianças (0-12 anos)','Jovens (13-24 anos)','Adultos (25-59 anos)','Idosos (60+)'],ans:-1,
-   info:'Todas as faixas etárias importam! <strong>Sua resposta</strong> ajuda os organizadores a entender as prioridades da comunidade. O Festival do Abacaxi é para todos!'},
+   info:'Cada fase da vida tem necessidades específicas. O equilíbrio entre todas é o grande desafio das políticas públicas municipais.'},
   {block:3,emoji:'🌱',q:'O que mais te orgulha em Barcarena hoje?',
    opts:['A natureza e as praias','A indústria e o progresso','A cultura e as tradições','A comunidade e as pessoas'],ans:-1,
-   info:'Barcarena tem muito para se orgulhar! <strong>Natureza exuberante, desenvolvimento econômico, cultura rica e uma comunidade unida</strong> fazem da cidade um lugar especial no Pará.'},
+   info:'Barcarena reúne tudo isso! Natureza, progresso, cultura e pessoas que constroem juntos a identidade do município.'},
   {block:3,emoji:'🚀',q:'Qual investimento você priorizaria para Barcarena nos próximos 4 anos?',
    opts:['Mais escolas e creches','Mais postos de saúde','Pavimentação e saneamento','Parques e cultura'],ans:-1,
-   info:'Esta é uma <strong>pergunta participativa</strong>! Sua escolha representa o futuro que você quer ver construído em Barcarena. Obrigado por contribuir!'},
+   info:'Todas essas prioridades fazem parte do planejamento municipal. Sua voz ajuda a direcionar os próximos passos!'},
+  {block:3,emoji:'🌊',q:'Como Barcarena deveria equilibrar indústria e meio ambiente?',
+   opts:['Priorizar só a indústria','Priorizar só o meio ambiente','Fiscalização e desenvolvimento sustentável','Reduzir a atividade industrial'],ans:-1,
+   info:'O equilíbrio entre economia e sustentabilidade é o grande desafio da Amazônia contemporânea — e Barcarena é um exemplo disso.'},
+  {block:3,emoji:'🤝',q:'Como você vê a participação da comunidade nas decisões de Barcarena?',
+   opts:['Deve aumentar muito','Está no nível certo','Precisa de mais transparência','A tecnologia pode ajudar'],ans:-1,
+   info:'A participação cidadã é fundamental para que as políticas públicas reflitam os anseios reais da população barcarenense.'},
 ];
 
-const ACHIEVEMENTS = [
-  {slug:'first',   emoji:'🌱',name:'Primeira Colheita',     check:s=>s.correct>=1},
-  {slug:'perfect', emoji:'🎯',name:'Mira Certeira',          check:s=>s.correct>=12},
-  {slug:'speed',   emoji:'⚡',name:'Relâmpago',              check:s=>s.fastAns>=2},
-  {slug:'streak3', emoji:'🔥',name:'Sequência de 3',         check:s=>s.maxStreak>=3},
-  {slug:'xprich',  emoji:'💰',name:'Rico em XP',             check:s=>s.xp>=200},
-  {slug:'done',    emoji:'🍍',name:'Jornada Completa',       check:s=>s.qIdx>=16},
-];
-
-
-const PATENTES = [
-  {minAcertos:10,maxAcertos:12,emoji:'🏆',title:'Mestre do Festival',
-   sub:'Você domina Barcarena de ponta a ponta! Parabéns!',cor:'rgba(255,193,7,0.15)'},
-  {minAcertos:7, maxAcertos:9, emoji:'🏅',title:'Orgulho de Barcarena',
-   sub:'Impressionante domínio cultural! Barcarena se orgulha de você.',cor:'rgba(138,43,226,0.12)'},
-  {minAcertos:4, maxAcertos:6, emoji:'🌿',title:'Embaixador do Abacaxi',
-   sub:'Você conhece bem o festival! Continue descobrindo nossa cidade.',cor:'rgba(0,200,83,0.10)'},
-  {minAcertos:0, maxAcertos:3, emoji:'🌱',title:'Amigo do Festival',
-   sub:'Bem-vindo à jornada! Continue aprendendo sobre Barcarena.',cor:'rgba(0,229,255,0.08)'},
-];
+function buildGameQuestions(){
+  function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+  const game=[];
+  for(let b=0;b<4;b++){
+    const pool=shuffle(QUESTION_BANK.filter(q=>q.block===b));
+    game.push(...pool.slice(0,4));
+  }
+  return game;
+}
+let ALL_QUESTIONS=buildGameQuestions();
 
 
 const REINFORCE_CORRECT=['Correto! 🎯','Isso aí! ✨','Manda ver! 🔥','Arrasou! 💥','Sensacional! 🌟','Que memória! 🧠'];
@@ -1854,6 +1995,20 @@ function validarCPF(cpf){
   return true;
 }
 
+
+document.getElementById('input-tel').addEventListener('input', e=>{
+  let v=e.target.value.replace(/\D/g,'');
+  if(v.length>11) v=v.slice(0,11);
+  if(v.length<=2) v=v.replace(/(\d{0,2})/,'($1');
+  else if(v.length<=7) v=v.replace(/(\d{2})(\d{0,5})/,'($1) $2');
+  else v=v.replace(/(\d{2})(\d{1})(\d{0,4})(\d{0,4})/,'($1) $2 $3-$4').replace(/-$/,'');
+  e.target.value=v.trim();
+});
+function validarTel(t){
+  const d=t.replace(/\D/g,'');
+  return d.length>=10 && d.length<=11;
+}
+
 document.getElementById('input-cpf').addEventListener('input', e=>{
   let v = e.target.value.replace(/\D/g,'').slice(0,11);
   if(v.length>9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
@@ -1871,8 +2026,11 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   const nome   = document.getElementById('input-nome').value.trim();
   const cpfRaw = document.getElementById('input-cpf').value.trim();
   const cidade = document.getElementById('input-cidade').value.trim();
+  const telRaw = document.getElementById('input-tel').value.trim();
   const cpfInput = document.getElementById('input-cpf');
   const cpfErr   = document.getElementById('cpf-error');
+  const telInput = document.getElementById('input-tel');
+  const telErr   = document.getElementById('tel-error');
 
   if(!validarCPF(cpfRaw)){
     cpfInput.classList.add('invalid');
@@ -1883,32 +2041,54 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   cpfInput.classList.remove('invalid');
   cpfErr.textContent = '';
 
+  if(!validarTel(telRaw)){
+    telInput.classList.add('invalid');
+    telErr.textContent = 'Celular inválido — informe DDD + número (ex: 91 9 8888-7777).';
+    telInput.focus();
+    return;
+  }
+  telInput.classList.remove('invalid');
+  telErr.textContent = '';
+
   function sanitize(s){ return s.replace(/[<>"'`]/g,'').trim().slice(0,60); }
   state.cadastro = {
-    nome:   sanitize(nome),
-    cpf:    cpfRaw,
-    cidade: sanitize(cidade),
+    nome:     sanitize(nome),
+    cpf:      cpfRaw,
+    telefone: telRaw.replace(/\D/g,''),
+    cidade:   sanitize(cidade),
     timestamp: new Date().toISOString()
   };
   state.nick = nome.split(' ')[0] || nome; // primeiro nome para exibição no jogo
 
   registrarParticipante(state.cadastro);
 
-  state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
-  state.correct=0; state.fastAns=0; state.shuffledAt5=false;
-  state.answered=false; state._answerLock=false; state.timeLeft=30;
-  state.answersLog=[]; state.earnedAchs=new Set(); state.consecutiveWrong=0;
-  state.blockCorrects=[0,0,0,0]; state.block4IntroShown=false; state.completedGame=false;
-  state._answerLock=false;
-  document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
-  document.body.classList.add('theme-b0');
-  document.querySelector('.app').classList.remove('fever-mode');
-  document.getElementById('timer-row').classList.remove('fever');
-  document.getElementById('fever-badge').classList.remove('show');
-  stopFeverParticles();
-  updateTopbar();
-  showScreen('screen-quiz');
-  renderQ();
+  const btnStart = document.getElementById('btn-start');
+  if(btnStart){ btnStart.disabled=true; btnStart.textContent='Verificando...'; }
+
+  verificarParticipante(state.cadastro).then(check=>{
+    if(btnStart){ btnStart.disabled=false; btnStart.textContent='Iniciar Jornada →'; }
+    if(!check.podeJogar){
+      toast(check.mensagem||'Você já completou o quiz! Cada CPF participa uma vez. 🍍');
+      return;
+    }
+
+    ALL_QUESTIONS=buildGameQuestions();
+    state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
+    state.correct=0; state.fastAns=0; state.shuffledAt5=false;
+    state.answered=false; state._answerLock=false; state.timeLeft=30;
+    state.answersLog=[]; state.earnedAchs=new Set(); state.consecutiveWrong=0;
+    state.blockCorrects=[0,0,0,0]; state.block4IntroShown=false; state.completedGame=false;
+    state._answerLock=false;
+    document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
+    document.body.classList.add('theme-b0');
+    document.querySelector('.app').classList.remove('fever-mode');
+    document.getElementById('timer-row').classList.remove('fever');
+    document.getElementById('fever-badge').classList.remove('show');
+    stopFeverParticles();
+    updateTopbar();
+    showScreen('screen-quiz');
+    renderQ();
+  });
 });
 
 
@@ -2548,6 +2728,7 @@ document.getElementById('go-quit-btn').onclick = () => {
 
 function fullRestart(){
   clearInterval(state.timer);
+  ALL_QUESTIONS=buildGameQuestions();
   state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
   state.correct=0; state.fastAns=0; state.shuffledAt5=false;
   state.answered=false; state._answerLock=false; state.timeLeft=30;
@@ -2602,10 +2783,13 @@ function showScreen(id){
   if(xpEl)   xpEl.style.display   = inQuiz ? ''     : 'none';
   if(stEl)   stEl.style.display   = inQuiz ? ''     : 'none';
   window.scrollTo({top:0, behavior:'instant'});
+  const contaBtn = document.getElementById('btn-minha-conta');
+  if(contaBtn) contaBtn.style.display = (id === 'screen-intro') ? 'flex' : 'none';
 }
 
 
 showRecordBadge();
+const _cBtn=document.getElementById('btn-minha-conta');if(_cBtn)_cBtn.style.display='flex';
 
 (function(){
   const topbar = document.querySelector('.topbar');
@@ -2641,6 +2825,88 @@ window.addEventListener('online', ()=>{
   }
 });
 
+
+// ══ MINHA CONTA ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function contaInit(){
+document.removeEventListener('DOMContentLoaded', contaInit);
+const _el = id => document.getElementById(id);
+if(!_el('conta-cpf')) return;
+
+_el('conta-cpf').addEventListener('input', e=>{
+  let v=e.target.value.replace(/\D/g,'');
+  if(v.length>11) v=v.slice(0,11);
+  if(v.length<=3) v=v;
+  else if(v.length<=6) v=v.replace(/(\d{3})(\d+)/,'$1.$2');
+  else if(v.length<=9) v=v.replace(/(\d{3})(\d{3})(\d+)/,'$1.$2.$3');
+  else v=v.replace(/(\d{3})(\d{3})(\d{3})(\d+)/,'$1.$2.$3-$4');
+  e.target.value=v;
+});
+
+_el('btn-minha-conta').addEventListener('click', ()=>{
+  _el('conta-modal-overlay').classList.add('show');
+  _el('conta-nome').focus();
+  _el('conta-resultado').classList.remove('show');
+  _el('conta-cpf-error').textContent='';
+});
+
+_el('conta-modal-close').addEventListener('click', ()=>{
+  _el('conta-modal-overlay').classList.remove('show');
+});
+
+_el('conta-modal-overlay').addEventListener('click', e=>{
+  if(e.target===_el('conta-modal-overlay'))
+    _el('conta-modal-overlay').classList.remove('show');
+});
+
+_el('conta-buscar').addEventListener('click', async ()=>{
+  const nome   = _el('conta-nome').value.trim();
+  const cpfRaw = _el('conta-cpf').value.replace(/\D/g,'');
+  const errEl  = _el('conta-cpf-error');
+  errEl.textContent='';
+  _el('conta-resultado').classList.remove('show');
+
+  if(!nome){ toast('Digite seu nome completo.'); return; }
+  if(cpfRaw.length!==11){ errEl.textContent='CPF inválido.'; return; }
+
+  const btn=_el('conta-buscar');
+  btn.disabled=true; btn.textContent='Consultando...';
+
+  const sb=getSupabase();
+  if(!sb){
+    btn.disabled=false; btn.textContent='Consultar →';
+    toast('Banco de dados não disponível no momento.');
+    return;
+  }
+  try{
+    const {data,error}=await sb
+      .from('participantes')
+      .select('nome,xp,acertos,patente,completou')
+      .eq('cpf',cpfRaw)
+      .limit(1);
+
+    btn.disabled=false; btn.textContent='Consultar →';
+
+    if(error||!data||data.length===0){
+      toast('Nenhum registro encontrado para este CPF.');
+      return;
+    }
+    const p=data[0];
+    _el('conta-res-nome').textContent=p.nome||nome;
+    _el('conta-res-xp').textContent=p.xp||0;
+    _el('conta-res-acertos').textContent=(p.acertos||0)+'/12';
+    _el('conta-res-patente').textContent=p.patente?'🏅 '+p.patente:'';
+    _el('conta-res-status').textContent=p.completou
+      ?'✅ Participação completa'
+      :'⏳ Iniciada mas não concluída';
+    _el('conta-resultado').classList.add('show');
+  }catch(e){
+    btn.disabled=false; btn.textContent='Consultar →';
+    toast('Erro ao consultar. Tente novamente.');
+  }
+});
+}); // fim DOMContentLoaded conta
+
 </script>
+
 </body>
 </html>
