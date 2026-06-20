@@ -109,7 +109,7 @@ body.golden{background:var(--gold-bg)}
 .sabia-overlay.show{opacity:1;pointer-events:all}
 .sabia-modal{
   background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);
-  padding:28px 22px 22px;width:100%;max-width:420px;
+  padding:22px 22px 22px;width:100%;max-width:420px;
   box-shadow:0 0 60px rgba(255,140,0,0.18),0 20px 40px rgba(0,0,0,0.6);
   transform:translateY(20px) scale(0.96);
   transition:transform .3s cubic-bezier(.175,.885,.32,1.275);
@@ -139,9 +139,11 @@ body.golden{background:var(--gold-bg)}
 .sabia-next:active{transform:scale(.97)}
 
 .sabia-block-tag{
-  position:absolute;top:16px;right:16px;
-  font-size:10px;font-weight:700;color:var(--text3);
+  display:block;
+  font-size:11px;font-weight:700;color:var(--text3);
   font-family:'Montserrat',sans-serif;letter-spacing:.5px;
+  margin-bottom:10px;
+  padding-right:0;
 }
 
 .logo-wrap{
@@ -952,6 +954,37 @@ body.golden{background:var(--gold-bg)}
 .conta-res-status{
   text-align:center;margin-top:8px;font-size:12px;color:var(--text3);
 }
+
+.resume-overlay{
+  position:fixed;inset:0;z-index:1100;
+  background:rgba(8,4,20,0.82);
+  display:none;align-items:center;justify-content:center;
+  padding:24px;
+}
+.resume-overlay.show{display:flex}
+.resume-modal{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:26px 22px;width:100%;max-width:380px;
+  box-shadow:0 0 60px rgba(255,140,0,0.18),0 20px 40px rgba(0,0,0,0.6);
+  text-align:center;
+}
+.resume-icon{font-size:38px;margin-bottom:10px}
+.resume-title{
+  font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;
+  color:#fff;margin-bottom:8px;
+}
+.resume-sub{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.resume-btns{display:flex;flex-direction:column;gap:10px}
+.resume-btn-primary{
+  width:100%;padding:14px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;
+  background:var(--grad-hot);color:#fff;border:none;border-radius:var(--radius-pill);
+  cursor:pointer;box-shadow:0 4px 20px rgba(255,61,119,0.35);
+}
+.resume-btn-secondary{
+  width:100%;padding:13px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;
+  background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-pill);
+  cursor:pointer;
+}
 </style>
 </head>
 <body class="theme-b0">
@@ -1269,6 +1302,19 @@ body.golden{background:var(--gold-bg)}
   </div>
 </div>
 </div><!-- /app -->
+
+<!-- ══ MODAL CONTINUAR DE ONDE PAROU ══ -->
+<div class="resume-overlay" id="resume-overlay" role="dialog" aria-modal="true" aria-label="Continuar quiz">
+  <div class="resume-modal">
+    <div class="resume-icon">🍍</div>
+    <div class="resume-title">Bem-vindo de volta!</div>
+    <div class="resume-sub" id="resume-sub">Encontramos uma jornada em andamento. Deseja continuar de onde parou?</div>
+    <div class="resume-btns">
+      <button class="resume-btn-primary" id="resume-continue">Continuar jornada →</button>
+      <button class="resume-btn-secondary" id="resume-restart">Começar do zero</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ BOTÃO MINHA CONTA ══ -->
 <button class="btn-minha-conta" id="btn-minha-conta" aria-label="Minha conta — ver pontuação" title="Minha conta" style="display:flex">
@@ -1806,6 +1852,58 @@ function saveRecord(v){
   if(!k)return;
   if(v>loadRecord())localStorage.setItem(k,v);
 }
+function _progressKey(cpf){
+  const c=(cpf||'').replace(/[^0-9]/g,'');
+  return c?'quiz-progress-'+c:'';
+}
+function saveProgress(){
+  const k=_progressKey(state.cadastro&&state.cadastro.cpf);
+  if(!k||state.completedGame)return;
+  try{
+    localStorage.setItem(k, JSON.stringify({
+      qIdx:state.qIdx, xp:state.xp, streak:state.streak, maxStreak:state.maxStreak,
+      correct:state.correct, fastAns:state.fastAns, shuffledAt5:state.shuffledAt5,
+      answersLog:state.answersLog, earnedAchs:[...state.earnedAchs],
+      blockCorrects:state.blockCorrects, block4IntroShown:state.block4IntroShown,
+      cadastro:state.cadastro, nick:state.nick,
+      questionBank:QUESTION_BANK, allQuestions:ALL_QUESTIONS,
+      savedAt:Date.now()
+    }));
+  }catch(e){ console.warn('[Quiz] Falha ao salvar progresso local:', e); }
+}
+function loadProgress(cpf){
+  const k=_progressKey(cpf);
+  if(!k)return null;
+  try{
+    const raw=localStorage.getItem(k);
+    if(!raw)return null;
+    const data=JSON.parse(raw);
+    if(!data||typeof data.qIdx!=='number'||data.qIdx<=0)return null;
+    if(Date.now()-(data.savedAt||0) > 6*60*60*1000)return null; // expira em 6h
+    return data;
+  }catch(e){ return null; }
+}
+function clearProgress(cpf){
+  const k=_progressKey(cpf);
+  if(k) localStorage.removeItem(k);
+}
+function resumeProgress(data){
+  QUESTION_BANK = data.questionBank||[];
+  ALL_QUESTIONS = data.allQuestions||[];
+  state.cadastro = data.cadastro;
+  state.nick = data.nick;
+  state.qIdx=data.qIdx; state.xp=data.xp; state.streak=data.streak; state.maxStreak=data.maxStreak;
+  state.correct=data.correct; state.fastAns=data.fastAns; state.shuffledAt5=data.shuffledAt5;
+  state.answersLog=data.answersLog||[]; state.earnedAchs=new Set(data.earnedAchs||[]);
+  state.blockCorrects=data.blockCorrects||[0,0,0,0]; state.block4IntroShown=data.block4IntroShown||false;
+  state.answered=false; state._answerLock=false; state.timeLeft=30; state.completedGame=false;
+  document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
+  document.body.classList.add('theme-b0');
+  updateTopbar();
+  showScreen('screen-quiz');
+  renderQ();
+}
+
 function showRecordBadge(){
   const wrap=document.getElementById('record-wrap');
   if(!wrap)return;
@@ -1976,19 +2074,54 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   telErr.textContent = '';
 
   function sanitize(s){ return s.replace(/[<>"'`]/g,'').trim().slice(0,60); }
-  state.cadastro = {
+  const cadastroAtual = {
     nome:     sanitize(nome),
     cpf:      cpfRaw,
     telefone: telRaw.replace(/\D/g,''),
     cidade:   sanitize(cidade),
     timestamp: new Date().toISOString()
   };
-  state.nick = nome.split(' ')[0] || nome; // primeiro nome para exibição no jogo
+  const nickAtual = nome.split(' ')[0] || nome;
 
+  const saved = loadProgress(cpfRaw);
+  if(saved){
+    document.getElementById('resume-sub').textContent =
+      `Você parou na pergunta ${saved.qIdx+1} com ${saved.xp} XP. Deseja continuar de onde parou?`;
+    document.getElementById('resume-overlay').classList.add('show');
+
+    const overlay = document.getElementById('resume-overlay');
+    const btnContinue = document.getElementById('resume-continue');
+    const btnRestartProg = document.getElementById('resume-restart');
+
+    const onContinue = ()=>{
+      overlay.classList.remove('show');
+      btnContinue.removeEventListener('click', onContinue);
+      btnRestartProg.removeEventListener('click', onRestart);
+      resumeProgress(saved);
+    };
+    const onRestart = ()=>{
+      overlay.classList.remove('show');
+      btnContinue.removeEventListener('click', onContinue);
+      btnRestartProg.removeEventListener('click', onRestart);
+      clearProgress(cpfRaw);
+      state.nick = nickAtual;
+      proceedToStart(cadastroAtual);
+    };
+    btnContinue.addEventListener('click', onContinue, {once:true});
+    btnRestartProg.addEventListener('click', onRestart, {once:true});
+    return;
+  }
+
+  state.nick = nickAtual;
+  proceedToStart(cadastroAtual);
+});
+
+function proceedToStart(cadastro){
+  state.cadastro = cadastro;
   const btnStart = document.getElementById('btn-start');
   if(btnStart){ btnStart.disabled=true; btnStart.textContent='Verificando...'; }
 
-  verificarParticipante(state.cadastro).then(async check=>{
+  verificarParticipante(cadastro).then(async check=>{
     if(!check.podeJogar){
       if(btnStart){ btnStart.disabled=false; btnStart.textContent='Iniciar Jornada →'; }
       toast(check.mensagem||'Você já completou o quiz! Cada CPF participa uma vez. 🍍');
@@ -1996,7 +2129,7 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
     }
 
     if(!check.jaExiste){
-      registrarParticipante(state.cadastro);
+      registrarParticipante(cadastro);
     }
 
     if(btnStart) btnStart.textContent='Carregando perguntas...';
@@ -2033,7 +2166,7 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
     if(btnStart){ btnStart.disabled=false; btnStart.textContent='Iniciar Jornada →'; }
     toast('⚠️ Algo deu errado. Tente novamente.');
   });
-});
+}
 
 
 function renderQ(){
@@ -2300,62 +2433,67 @@ function answer(idx){
   });
 
   if(isOk){
-    if(!isFree){state.correct++; state.blockCorrects[q.block]++;}
-    state.streak++;state.consecutiveWrong=0;
-    if(state.streak>state.maxStreak)state.maxStreak=state.streak;
-    if(state.timeLeft>=20)state.fastAns++; // resposta rápida = sobram 20s+ de 30
-    state.xp+=xpR.total;
+    try{
+      if(!isFree){state.correct++; state.blockCorrects[q.block]++;}
+      state.streak++;state.consecutiveWrong=0;
+      if(state.streak>state.maxStreak)state.maxStreak=state.streak;
+      if(state.timeLeft>=20)state.fastAns++; // resposta rápida = sobram 20s+ de 30
+      state.xp+=xpR.total;
 
-    playSound(state.streak>=3?'streak':'correct');
-    haptic(state.streak>=3?[40,20,40,20,80,20,120]:[30,10,60]);
+      playSound(state.streak>=3?'streak':'correct');
+      haptic(state.streak>=3?[40,20,40,20,80,20,120]:[30,10,60]);
 
-    const btn=document.getElementById('opts').querySelectorAll('.opt-btn')[idx];
-    const r=btn.getBoundingClientRect();
-    spawnConfetti(r.left+r.width/2,r.top+r.height/2,state.streak>=3||isGold?75:38);
-    setLogoState(state.streak>=3?'logo-fire':'logo-pulse');
-
-    document.getElementById('xp-flash').textContent='+'+xpR.total+' XP'+(isGold?' 🏆':'');
-    let pills=`<span class="xp-pill base">Base ${xpR.base}</span>`;
-    if(xpR.speedBonus)pills+=`<span class="xp-pill speed">⚡ +${xpR.speedBonus}</span>`;
-    if(xpR.sBonus)pills+=`<span class="xp-pill bonus">🔥 +${xpR.sBonus}</span>`;
-    if(xpR.catBonus)pills+=`<span class="xp-pill cat">⭐ +${xpR.catBonus}</span>`;
-    if(xpR.goldBonus)pills+=`<span class="xp-pill gold2x">🏆 2× +${xpR.goldBonus}</span>`;
-    document.getElementById('xp-breakdown').innerHTML=pills;
-
-    let msg='';
-    if(isFree)msg=pick(REINFORCE_FREE);
-    else if(state.streak>=2&&REINFORCE_STREAK[Math.min(state.streak,4)])msg=REINFORCE_STREAK[Math.min(state.streak,4)];
-    else if(state.timeLeft>=10)msg=pick(REINFORCE_SPEED);
-    else msg=pick(REINFORCE_CORRECT);
-    showReinforce(msg);
-    if(!isFree)toast('+'+xpR.total+' XP'+(isGold?' 🏆':''));
-    checkAchievements();
-
-
-    if(state.correct === 5 && !state.shuffledAt5){
-      state.shuffledAt5 = true;
-      const nextIdx = state.qIdx + 1;
-      if(nextIdx < ALL_QUESTIONS.length){
-        const remaining = ALL_QUESTIONS.splice(nextIdx);
-
-        const byBlock = [[], [], [], []];
-        remaining.forEach(q => byBlock[q.block].push(q));
-        byBlock.forEach(arr => {
-          for(let i=arr.length-1;i>0;i--){
-            const j=Math.floor(Math.random()*(i+1));
-            [arr[i],arr[j]]=[arr[j],arr[i]];
-          }
-        });
-        const reshuffled = byBlock.flat();
-        ALL_QUESTIONS.splice(nextIdx, 0, ...reshuffled);
-        toast('🔀 Reviravolta! Sequência embaralhada!', 'ach');
-        haptic([80, 40, 80]);
+      const btn=document.getElementById('opts').querySelectorAll('.opt-btn')[idx];
+      if(btn){
+        const r=btn.getBoundingClientRect();
+        spawnConfetti(r.left+r.width/2,r.top+r.height/2,state.streak>=3||isGold?75:38);
       }
+      setLogoState(state.streak>=3?'logo-fire':'logo-pulse');
+
+      document.getElementById('xp-flash').textContent='+'+xpR.total+' XP'+(isGold?' 🏆':'');
+      let pills=`<span class="xp-pill base">Base ${xpR.base}</span>`;
+      if(xpR.speedBonus)pills+=`<span class="xp-pill speed">⚡ +${xpR.speedBonus}</span>`;
+      if(xpR.sBonus)pills+=`<span class="xp-pill bonus">🔥 +${xpR.sBonus}</span>`;
+      if(xpR.catBonus)pills+=`<span class="xp-pill cat">⭐ +${xpR.catBonus}</span>`;
+      if(xpR.goldBonus)pills+=`<span class="xp-pill gold2x">🏆 2× +${xpR.goldBonus}</span>`;
+      document.getElementById('xp-breakdown').innerHTML=pills;
+
+      let msg='';
+      if(isFree)msg=pick(REINFORCE_FREE);
+      else if(state.streak>=2&&REINFORCE_STREAK[Math.min(state.streak,4)])msg=REINFORCE_STREAK[Math.min(state.streak,4)];
+      else if(state.timeLeft>=10)msg=pick(REINFORCE_SPEED);
+      else msg=pick(REINFORCE_CORRECT);
+      showReinforce(msg);
+      if(!isFree)toast('+'+xpR.total+' XP'+(isGold?' 🏆':''));
+      checkAchievements();
+
+      if(state.correct === 5 && !state.shuffledAt5){
+        state.shuffledAt5 = true;
+        const nextIdx = state.qIdx + 1;
+        if(nextIdx < ALL_QUESTIONS.length){
+          const remaining = ALL_QUESTIONS.splice(nextIdx);
+
+          const byBlock = [[], [], [], []];
+          remaining.forEach(q => byBlock[q.block].push(q));
+          byBlock.forEach(arr => {
+            for(let i=arr.length-1;i>0;i--){
+              const j=Math.floor(Math.random()*(i+1));
+              [arr[i],arr[j]]=[arr[j],arr[i]];
+            }
+          });
+          const reshuffled = byBlock.flat();
+          ALL_QUESTIONS.splice(nextIdx, 0, ...reshuffled);
+          toast('🔀 Reviravolta! Sequência embaralhada!', 'ach');
+          haptic([80, 40, 80]);
+        }
+      }
+
+      state.answersLog.push({qIdx:state.qIdx,selected:idx,isOk,timeLeft:state.timeLeft,xp:xpR.total,isFree});
+      updateTopbar();updateStats();updateStreakStrip();
+      saveProgress();
+    }catch(e){
+      console.error('[Quiz] Erro ao processar acerto:', e);
     }
-
-    state.answersLog.push({qIdx:state.qIdx,selected:idx,isOk,timeLeft:state.timeLeft,xp:xpR.total,isFree});
-    updateTopbar();updateStats();updateStreakStrip();
-
 
     setTimeout(advance, isFree ? 400 : 600);
 
@@ -2369,7 +2507,7 @@ function answer(idx){
 
     state.answersLog.push({qIdx:state.qIdx,selected:idx,isOk,timeLeft:state.timeLeft,xp:0,isFree});
     updateTopbar(); updateStats(); updateStreakStrip();
-
+    saveProgress();
 
     setTimeout(() => openSabia(q.info, blkMeta, advance), 500);
   }
@@ -2482,6 +2620,7 @@ function animateCounter(el,target,duration=1600){
 }
 
 function showResult(){
+  clearProgress(state.cadastro&&state.cadastro.cpf);
   showScreen('screen-result');
   document.querySelector('.app').classList.remove('fever-mode');
   document.getElementById('timer-row').classList.remove('fever');
