@@ -985,6 +985,45 @@ body.golden{background:var(--gold-bg)}
   background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-pill);
   cursor:pointer;
 }
+
+.already-overlay{
+  position:fixed;inset:0;z-index:1100;
+  background:rgba(8,4,20,0.85);
+  display:none;align-items:center;justify-content:center;
+  padding:24px;
+}
+.already-overlay.show{display:flex}
+.already-modal{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:26px 22px;width:100%;max-width:380px;
+  box-shadow:0 0 60px rgba(255,193,7,0.18),0 20px 40px rgba(0,0,0,0.6);
+  text-align:center;
+}
+.already-icon{font-size:38px;margin-bottom:10px}
+.already-title{
+  font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;
+  color:#fff;margin-bottom:8px;
+}
+.already-sub{font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6}
+.already-stats{
+  display:flex;gap:10px;justify-content:center;margin-bottom:20px;
+}
+.already-stat{
+  background:rgba(255,255,255,0.05);border-radius:12px;padding:10px 16px;
+}
+.already-stat-val{font-size:18px;font-weight:800;color:var(--accent2)}
+.already-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.already-btns{display:flex;flex-direction:column;gap:10px}
+.already-btn-primary{
+  width:100%;padding:14px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;
+  background:var(--grad-gold);color:#1a0a00;border:none;border-radius:var(--radius-pill);
+  cursor:pointer;box-shadow:0 4px 20px rgba(255,193,7,0.35);
+}
+.already-btn-secondary{
+  width:100%;padding:13px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;
+  background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-pill);
+  cursor:pointer;
+}
 </style>
 </head>
 <body class="theme-b0">
@@ -1303,6 +1342,23 @@ body.golden{background:var(--gold-bg)}
 </div>
 </div><!-- /app -->
 
+<!-- ══ MODAL JÁ COMPLETOU — REFAZER OU CERTIFICADO ══ -->
+<div class="already-overlay" id="already-overlay" role="dialog" aria-modal="true" aria-label="Você já participou">
+  <div class="already-modal">
+    <div class="already-icon">🏆</div>
+    <div class="already-title" id="already-title">Você já completou o quiz!</div>
+    <div class="already-sub" id="already-sub">Aqui está o que você conquistou:</div>
+    <div class="already-stats">
+      <div class="already-stat"><div class="already-stat-val" id="already-xp">0</div><div class="already-stat-lbl">XP</div></div>
+      <div class="already-stat"><div class="already-stat-val" id="already-acertos">0/12</div><div class="already-stat-lbl">Acertos</div></div>
+    </div>
+    <div class="already-btns">
+      <button class="already-btn-primary" id="already-cert">🎖️ Baixar meu certificado</button>
+      <button class="already-btn-secondary" id="already-restart">🔄 Refazer o quiz</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL CONTINUAR DE ONDE PAROU ══ -->
 <div class="resume-overlay" id="resume-overlay" role="dialog" aria-modal="true" aria-label="Continuar quiz">
   <div class="resume-modal">
@@ -1387,14 +1443,20 @@ async function verificarParticipante(cadastro){
   if(!sb) return {podeJogar:true, mensagem:'', jaExiste:false};
   try{
     const query=sb.from('participantes')
-      .select('id,nome,completou')
+      .select('id,nome,cidade,xp,acertos,patente,completou')
       .eq('cpf',cadastro.cpf)
       .limit(1);
     const {data,error}=await Promise.race([query,timeout]);
     if(error||!data||data.length===0) return {podeJogar:true,mensagem:'',jaExiste:false};
     const p=data[0];
     if(p.completou){
-      return {podeJogar:false,jaExiste:true,mensagem:`Olá! Identificamos que você (${p.nome}) já participou e completou o quiz. Cada CPF pode jogar apenas uma vez. Obrigado pela participação! 🍍`};
+      return {
+        podeJogar:false,
+        jaExiste:true,
+        jaCompletou:true,
+        participante:p,
+        mensagem:`Olá! Identificamos que você (${p.nome}) já participou e completou o quiz. Cada CPF pode jogar apenas uma vez. Obrigado pela participação! 🍍`
+      };
     }
     return {podeJogar:true,jaExiste:true,mensagem:'',atualizarId:p.id};
   }catch(e){
@@ -1546,11 +1608,11 @@ async function fetchQuestionBank(){
 
   const BLOCK_EMOJI = ['🍍','🌆','🏗️','🔮'];
   return data.map(row => ({
-    block: row.block,
-    emoji: BLOCK_EMOJI[row.block] || '❓',
+    block: Number(row.block),
+    emoji: BLOCK_EMOJI[Number(row.block)] || '❓',
     q: row.question_text,
     opts: [row.option_A, row.option_B, row.option_C, row.option_D],
-    ans: row.correct_answer,
+    ans: Number(row.correct_answer),
     info: row.did_you_know || ''
   }));
 }
@@ -1575,6 +1637,13 @@ function buildGameQuestions(bank){
 let QUESTION_BANK = [];
 let ALL_QUESTIONS = [];
 
+
+const PATENTES=[
+  {minAcertos:10,maxAcertos:12,emoji:'🏆',title:'Mestre do Festival',sub:'Você conhece Barcarena de coração!'},
+  {minAcertos:7, maxAcertos:9, emoji:'🏅',title:'Orgulho de Barcarena',sub:'Conhecimento de verdadeiro barcarenense!'},
+  {minAcertos:4, maxAcertos:6, emoji:'🌿',title:'Embaixador do Abacaxi',sub:'Você manda bem na história local!'},
+  {minAcertos:0, maxAcertos:3, emoji:'🌱',title:'Amigo do Festival',sub:'Todo mundo começa de algum lugar!'}
+];
 
 const REINFORCE_CORRECT=['Correto! 🎯','Isso aí! ✨','Manda ver! 🔥','Arrasou! 💥','Sensacional! 🌟','Que memória! 🧠'];
 const REINFORCE_STREAK={2:'Sequência! 🔥',3:'Tá em chamas! 🔥🔥',4:'IMPARÁVEL! 🔥🔥🔥'};
@@ -2124,7 +2193,12 @@ function proceedToStart(cadastro){
   verificarParticipante(cadastro).then(async check=>{
     if(!check.podeJogar){
       if(btnStart){ btnStart.disabled=false; btnStart.textContent='Iniciar Jornada →'; }
-      toast(check.mensagem||'Você já completou o quiz! Cada CPF participa uma vez. 🍍');
+
+      if(check.jaCompletou && check.participante){
+        showAlreadyCompletedModal(check.participante, cadastro);
+      } else {
+        toast(check.mensagem||'Você já completou o quiz! Cada CPF participa uma vez. 🍍');
+      }
       return;
     }
 
