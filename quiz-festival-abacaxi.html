@@ -1645,6 +1645,18 @@ const PATENTES=[
   {minAcertos:0, maxAcertos:3, emoji:'🌱',title:'Amigo do Festival',sub:'Todo mundo começa de algum lugar!'}
 ];
 
+const ACHIEVEMENTS=[
+  {slug:'primeiro-acerto',  emoji:'🎯', name:'Primeiro Acerto',     check:s=>s.correct>=1},
+  {slug:'sequencia-3',      emoji:'🔥', name:'Em Chamas',           check:s=>s.maxStreak>=3},
+  {slug:'sequencia-5',      emoji:'⚡', name:'Imparável',            check:s=>s.maxStreak>=5},
+  {slug:'meio-caminho',     emoji:'🚶', name:'Meio Caminho',        check:s=>s.qIdx>=8},
+  {slug:'velocista',        emoji:'💨', name:'Velocista',           check:s=>s.fastAns>=5},
+  {slug:'seis-acertos',     emoji:'🌿', name:'Embaixador',          check:s=>s.correct>=6},
+  {slug:'dez-acertos',      emoji:'🏅', name:'Quase Lá',            check:s=>s.correct>=10},
+  {slug:'mil-xp',           emoji:'💎', name:'Mil XP',              check:s=>s.xp>=1000},
+  {slug:'mestre-final',     emoji:'🏆', name:'Mestre do Festival',  check:s=>s.correct>=10&&s.qIdx>=16},
+];
+
 const REINFORCE_CORRECT=['Correto! 🎯','Isso aí! ✨','Manda ver! 🔥','Arrasou! 💥','Sensacional! 🌟','Que memória! 🧠'];
 const REINFORCE_STREAK={2:'Sequência! 🔥',3:'Tá em chamas! 🔥🔥',4:'IMPARÁVEL! 🔥🔥🔥'};
 const REINFORCE_SPEED=['Que velocidade! ⚡','Relâmpago! ⚡','Super rápido! 💨'];
