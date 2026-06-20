@@ -1374,6 +1374,10 @@ async function registrarParticipante(cadastro, tentativa=1){
       tempo_medio: 0
     });
     if(error){
+      if(error.code === '23505'){
+        console.warn('[Quiz] CPF já cadastrado (constraint única) — sem duplicar registro.');
+        return;
+      }
       console.error('[Quiz] Erro ao registrar (tentativa '+tentativa+'):', error.message);
       if(tentativa < 2) setTimeout(()=>registrarParticipante(cadastro, tentativa+1), 2000);
     } else {
@@ -2401,11 +2405,10 @@ function advance(){
   const justFinishedBlock = ALL_QUESTIONS[state.qIdx]?.block ?? -1;
   state.qIdx++;
 
+  const nextQAfterAdvance = ALL_QUESTIONS[state.qIdx];
+  const isLastOfBlock = !nextQAfterAdvance || nextQAfterAdvance.block !== justFinishedBlock;
 
-  const isLastOfBlock = justFinishedBlock <= 2 &&
-    !ALL_QUESTIONS[state.qIdx] ||
-    (ALL_QUESTIONS[state.qIdx] && ALL_QUESTIONS[state.qIdx].block !== justFinishedBlock);
-  if(justFinishedBlock <= 2 && isLastOfBlock){
+  if(justFinishedBlock>=0 && justFinishedBlock<=2 && isLastOfBlock){
     const blockAcertos = state.blockCorrects[justFinishedBlock];
     if(blockAcertos < 3){
       showBlockGameOver(justFinishedBlock, blockAcertos);
