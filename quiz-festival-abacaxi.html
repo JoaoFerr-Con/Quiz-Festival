@@ -1145,7 +1145,7 @@ body.golden{background:var(--gold-bg)}
     <form id="cadastro-form" class="cadastro-form" autocomplete="off">
       <div class="field-wrap">
         <label for="input-nome">Nome completo</label>
-        <input id="input-nome" type="text" placeholder="Ex: Maria da Silva" maxlength="60" required>
+        <input id="input-nome" type="text" placeholder="Nome" maxlength="60" required>
       </div>
       <div class="field-wrap">
         <label for="input-cpf">CPF</label>
@@ -1154,15 +1154,15 @@ body.golden{background:var(--gold-bg)}
       </div>
       <div class="field-wrap">
         <label for="input-cidade">Cidade</label>
-        <input id="input-cidade" type="text" placeholder="Ex: Barcarena" maxlength="40" required>
+        <input id="input-cidade" type="text" placeholder="Barcarena" maxlength="40" required>
       </div>
       <div class="field-wrap">
         <label for="input-tel">Celular</label>
         <input id="input-tel" type="tel" inputmode="numeric" placeholder="(91) 9 0000-0000" maxlength="16" required autocomplete="off">
         <span class="field-error" id="tel-error"></span>
       </div>
-      <p class="privacy-note">🔒 Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros.</p>
-      <button type="submit" class="btn-primary" id="btn-start">Iniciar jornada 🍍</button>
+      <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros. 🔒</p>
+      <button type="submit" class="btn-primary" id="btn-start"> Iniciar jornada </button>
     </form>
   </div>
 
@@ -1381,7 +1381,7 @@ body.golden{background:var(--gold-bg)}
 <div class="conta-modal-overlay" id="conta-modal-overlay" role="dialog" aria-modal="true" aria-label="Consultar pontuação">
   <div class="conta-modal">
     <button class="conta-modal-close" id="conta-modal-close" aria-label="Fechar">✕</button>
-    <div class="conta-modal-title">👤 Minha Conta</div>
+    <div class="conta-modal-title"> Minha Conta 👤</div>
     <div class="conta-modal-sub">Digite seu nome e CPF para ver sua pontuação</div>
 
     <div class="field-wrap">
@@ -2197,6 +2197,59 @@ document.getElementById('cadastro-form').addEventListener('submit', e=>{
   proceedToStart(cadastroAtual);
 });
 
+function showAlreadyCompletedModal(participante, cadastro){
+  const overlay = document.getElementById('already-overlay');
+  const xpEl    = document.getElementById('already-xp');
+  const accEl   = document.getElementById('already-acertos');
+  const subEl   = document.getElementById('already-sub');
+  const btnCert = document.getElementById('already-cert');
+  const btnReset= document.getElementById('already-restart');
+
+  const acertos = participante.acertos || 0;
+  const xp = participante.xp || 0;
+  const patenteObj = getPatente(acertos);
+
+  xpEl.textContent = xp;
+  accEl.textContent = acertos + '/12';
+  subEl.textContent = `Você já é ${patenteObj.title}! Aqui está o que você conquistou:`;
+
+  overlay.classList.add('show');
+
+  const onCert = ()=>{
+    overlay.classList.remove('show');
+    btnCert.removeEventListener('click', onCert);
+    btnReset.removeEventListener('click', onReset);
+
+    document.getElementById('cert-name').textContent = participante.nome || cadastro.nome;
+    document.getElementById('cert-city').textContent = participante.cidade || cadastro.cidade;
+    document.getElementById('cert-patente-emoji').textContent = patenteObj.emoji;
+    document.getElementById('cert-patente-name').textContent = patenteObj.title;
+    document.getElementById('cert-xp').textContent = xp;
+    document.getElementById('cert-acertos').textContent = acertos + '/12';
+
+    const resTitle = document.getElementById('res-title');
+    const resRank  = document.getElementById('res-rank');
+    const resSub   = document.getElementById('res-sub');
+    if(resTitle) resTitle.textContent = patenteObj.title + '!';
+    if(resRank)  resRank.textContent  = patenteObj.emoji;
+    if(resSub)   resSub.textContent   = 'Barcarena te agradece 🍍';
+
+    showScreen('screen-result');
+    toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇');
+  };
+
+  const onReset = ()=>{
+    overlay.classList.remove('show');
+    btnCert.removeEventListener('click', onCert);
+    btnReset.removeEventListener('click', onReset);
+    clearProgress(cadastro.cpf);
+    proceedToStartForceReplay(cadastro);
+  };
+
+  btnCert.addEventListener('click', onCert, {once:true});
+  btnReset.addEventListener('click', onReset, {once:true});
+}
+
 function proceedToStart(cadastro){
   state.cadastro = cadastro;
   const btnStart = document.getElementById('btn-start');
@@ -2252,6 +2305,41 @@ function proceedToStart(cadastro){
     if(btnStart){ btnStart.disabled=false; btnStart.textContent='Iniciar Jornada →'; }
     toast('⚠️ Algo deu errado. Tente novamente.');
   });
+}
+
+async function proceedToStartForceReplay(cadastro){
+  state.cadastro = cadastro;
+  const btnStart = document.getElementById('btn-start');
+  if(btnStart){ btnStart.disabled=true; btnStart.textContent='Carregando perguntas...'; }
+
+  try{
+    QUESTION_BANK = await fetchQuestionBank();
+  }catch(e){
+    console.error('[Quiz] Erro ao buscar perguntas (replay):', e);
+    if(btnStart){ btnStart.disabled=false; btnStart.textContent='Iniciar Jornada →'; }
+    toast('⚠️ Falha de conexão. Verifique sua internet e tente novamente.');
+    return;
+  }
+
+  if(btnStart){ btnStart.disabled=false; btnStart.textContent='Iniciar Jornada →'; }
+
+  ALL_QUESTIONS=buildGameQuestions(QUESTION_BANK);
+  state.qIdx=0; state.xp=0; state.streak=0; state.maxStreak=0;
+  state.correct=0; state.fastAns=0; state.shuffledAt5=false;
+  state.answered=false; state._answerLock=false; state.timeLeft=30;
+  state.answersLog=[]; state.earnedAchs=new Set(); state.consecutiveWrong=0;
+  state.blockCorrects=[0,0,0,0]; state.block4IntroShown=false; state.completedGame=false;
+  state._answerLock=false;
+  document.body.classList.remove('golden','theme-b1','theme-b2','theme-b3');
+  document.body.classList.add('theme-b0');
+  document.querySelector('.app').classList.remove('fever-mode');
+  document.getElementById('timer-row').classList.remove('fever');
+  document.getElementById('fever-badge').classList.remove('show');
+  stopFeverParticles();
+  updateTopbar();
+  showScreen('screen-quiz');
+  renderQ();
+  toast('🔄 Jogando novamente — seu resultado anterior será atualizado!');
 }
 
 
