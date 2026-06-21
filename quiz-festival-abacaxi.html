@@ -1288,8 +1288,8 @@ body.golden{background:var(--gold-bg)}
     <div class="lb-card" id="lb-card"></div>
 
     <div class="result-actions">
-      <button class="btn-primary btn-replay" id="btn-replay">Jogar novamente 🍍</button>
-      <button class="btn-challenge" id="btn-challenge">🤝 Desafiar amigos</button>
+      <button class="btn-primary btn-replay" id="btn-replay">Jogar novamente </button>
+      <button class="btn-challenge" id="btn-challenge"> Desafiar amigos</button>
       <button class="btn-restart-home" id="btn-restart-home">↩ Recomeçar</button>
     </div>
   </div>
@@ -1350,7 +1350,7 @@ body.golden{background:var(--gold-bg)}
     <div class="already-sub" id="already-sub">Você deseja reiniciar sua pontuação?</div>
     <div class="already-stats">
       <div class="already-stat"><div class="already-stat-val" id="already-xp">0</div><div class="already-stat-lbl">XP</div></div>
-      <div class="already-stat"><div class="already-stat-val" id="already-acertos">0/12</div><div class="already-stat-lbl">Acertos</div></div>
+      <div class="already-stat"><div class="already-stat-val" id="already-acertos">0/16</div><div class="already-stat-lbl">Acertos</div></div>
     </div>
     <div class="already-btns">
       <button class="already-btn-primary" id="already-cert">Não, ver meu certificado</button>
@@ -1386,7 +1386,7 @@ body.golden{background:var(--gold-bg)}
 
     <div class="field-wrap">
       <label for="conta-nome">Nome completo</label>
-      <input id="conta-nome" type="text" placeholder="Ex: Maria da Silva" maxlength="60">
+      <input id="conta-nome" type="text" placeholder="Nome" maxlength="60">
     </div>
     <div class="field-wrap">
       <label for="conta-cpf">CPF</label>
@@ -1444,7 +1444,7 @@ async function verificarParticipante(cadastro){
   if(!sb) return {podeJogar:true, mensagem:'', jaExiste:false};
   try{
     const query=sb.from('participantes')
-      .select('id,nome,cidade,xp,acertos,patente,completou')
+      .select('id,nome,cidade,cpf,xp,acertos,patente,completou,max_streak,fast_ans')
       .eq('cpf',cadastro.cpf)
       .limit(1);
     const {data,error}=await Promise.race([query,timeout]);
@@ -1480,7 +1480,9 @@ async function registrarParticipante(cadastro, tentativa=1){
       acertos:     0,
       patente:     '',
       completou:   false,
-      tempo_medio: 0
+      tempo_medio: 0,
+      max_streak:  0,
+      fast_ans:    0
     });
     if(error){
       if(error.code === '23505'){
@@ -1522,7 +1524,7 @@ async function salvarResultado(cadastro, xp, acertos, patente, completou, tentat
     if(!data || data.length === 0){ console.warn('[Quiz] Participante não encontrado para update'); return; }
 
     const { error } = await sb.from('participantes')
-      .update({ xp, acertos, patente, completou, tempo_medio: tempoMedio })
+      .update({ xp, acertos, patente, completou, tempo_medio: tempoMedio, max_streak: state.maxStreak||0, fast_ans: state.fastAns||0 })
       .eq('id', data[0].id);
 
     if(error){
@@ -2253,7 +2255,7 @@ function showAlreadyCompletedModal(participante, cadastro){
   const patenteObj = getPatente(acertos);
 
   xpEl.textContent = xp;
-  accEl.textContent = acertos + '/12';
+  accEl.textContent = Math.min(PERGUNTAS_OBRIGATORIAS, acertos) + '/' + TOTAL_PERGUNTAS;
   subEl.textContent = `Você já é ${patenteObj.title}. Deseja reiniciar sua pontuação?`;
 
   overlay.classList.add('show');
@@ -2263,21 +2265,7 @@ function showAlreadyCompletedModal(participante, cadastro){
     btnCert.removeEventListener('click', onCert);
     btnReset.removeEventListener('click', onReset);
 
-    document.getElementById('cert-name').textContent = participante.nome || cadastro.nome;
-    document.getElementById('cert-city').textContent = participante.cidade || cadastro.cidade;
-    document.getElementById('cert-patente-emoji').textContent = patenteObj.emoji;
-    document.getElementById('cert-patente-name').textContent = patenteObj.title;
-    document.getElementById('cert-xp').textContent = xp;
-    document.getElementById('cert-acertos').textContent = acertos + '/12';
-
-    const resTitle = document.getElementById('res-title');
-    const resRank  = document.getElementById('res-rank');
-    const resSub   = document.getElementById('res-sub');
-    if(resTitle) resTitle.textContent = patenteObj.title + '!';
-    if(resRank)  resRank.textContent  = patenteObj.emoji;
-    if(resSub)   resSub.textContent   = 'Barcarena te agradece 🍍';
-
-    showScreen('screen-result');
+    mostrarResultadoDe(participante, cadastro.nome, cadastro.cidade, cadastro.cpf);
     toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇');
   };
 
@@ -2963,6 +2951,26 @@ function renderResultScreen(){
 }
 
 
+// Reconstrói o state a partir de um registro do banco e mostra a tela de
+// resultado completa (XP, patente, faixas, conquistas, ranking, certificado)
+// SEM regravar nada. Usado pelo "Minha Conta" e pelo modal "Usuário já cadastrado".
+// Como max_streak e fast_ans agora vêm do banco, as conquistas de sequência e
+// velocidade aparecem corretamente, e não mais travadas.
+function mostrarResultadoDe(p, nomeFb, cidadeFb, cpfFb){
+  state.xp            = p.xp || 0;
+  state.correct       = Math.min(PERGUNTAS_OBRIGATORIAS, p.acertos || 0);
+  state.nick          = p.nome || nomeFb || 'Participante';
+  state.cadastro      = { nome: p.nome||nomeFb||'', cidade: p.cidade||cidadeFb||'Barcarena', cpf: normCpf(p.cpf||cpfFb||'') };
+  state.completedGame = !!p.completou;
+  state.maxStreak     = p.max_streak || 0;
+  state.fastAns       = p.fast_ans || 0;
+  state.qIdx          = 16;
+  state.earnedAchs    = new Set();
+  showScreen('screen-result');
+  renderResultScreen();
+}
+
+
 function buildShareText(isChallenge){
   const p=getPatente(state.correct);
   const url='https://quiz-festival.vercel.app/';
@@ -3204,7 +3212,7 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     const cpfFormatado = cpfRaw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
     const {data,error}=await sb
       .from('participantes')
-      .select('nome,cidade,xp,acertos,patente,completou')
+      .select('nome,cidade,cpf,xp,acertos,patente,completou,max_streak,fast_ans')
       .or('cpf.eq.'+cpfRaw+',cpf.eq.'+cpfFormatado)
       .limit(1);
 
@@ -3217,7 +3225,7 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     const p=data[0];
     _el('conta-res-nome').textContent=p.nome||nome;
     _el('conta-res-xp').textContent=p.xp||0;
-    _el('conta-res-acertos').textContent=(p.acertos||0)+'/12';
+    _el('conta-res-acertos').textContent=Math.min(PERGUNTAS_OBRIGATORIAS,p.acertos||0)+'/'+TOTAL_PERGUNTAS;
     _el('conta-res-patente').textContent=p.patente?'🏅 '+p.patente:'';
     _el('conta-res-status').textContent=p.completou
       ?'✅ Participação completa'
@@ -3228,22 +3236,8 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     if(p.completou){
       certBtn.style.display='block';
       certBtn.onclick=()=>{
-        // Reconstrói o state a partir dos dados consultados, para que a tela de
-        // resultado (XP, patente, faixas, conquistas, ranking e certificado) seja
-        // montada por renderResultScreen() — sem regravar nada no banco.
-        const acertos = Math.min(PERGUNTAS_OBRIGATORIAS, p.acertos||0);
-        state.xp           = p.xp || 0;
-        state.correct      = acertos;
-        state.nick         = p.nome || nome;
-        state.cadastro     = { nome: p.nome||nome, cidade: p.cidade||'', cpf: cpfRaw };
-        state.completedGame= !!p.completou;
-        state.fastAns      = 0;
-        state.maxStreak    = 0;
-        state.qIdx         = 16;
-        state.earnedAchs   = new Set();
         _el('conta-modal-overlay').classList.remove('show');
-        showScreen('screen-result');
-        renderResultScreen();
+        mostrarResultadoDe(p, nome, '', cpfRaw);
         toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇');
       };
     } else {
