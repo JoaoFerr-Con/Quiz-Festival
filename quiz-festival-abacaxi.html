@@ -3165,7 +3165,7 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     const p=data[0];
     _el('conta-res-nome').textContent=p.nome||nome;
     _el('conta-res-xp').textContent=p.xp||0;
-    _el('conta-res-acertos').textContent=(p.acertos||0)+'/12';
+    _el('conta-res-acertos').textContent=(p.acertos||0)+'/16';
     _el('conta-res-patente').textContent=p.patente?'🏅 '+p.patente:'';
     _el('conta-res-status').textContent=p.completou
       ?'✅ Participação completa'
