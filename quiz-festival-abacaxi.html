@@ -1319,9 +1319,9 @@ body.golden{background:var(--gold-bg)}
   <div class="pineapple-shadow"></div>
   <div class="block4-title">🎉 <em>RODADA BÔNUS!</em></div>
   <div class="block4-desc">
-    As próximas perguntas <strong>não têm resposta certa ou errada</strong>.<br>
-    Queremos ouvir a sua opinião para construir o <strong>futuro de Barcarena!</strong><br>
-    Participe — sua voz importa! 🍍
+    As próximas perguntas <strong> não têm resposta certa ou errada </strong>.<br>
+    Queremos ouvir a sua opinião para construir o <strong> futuro de Barcarena!</strong><br>
+    Participe, sua voz importa! 
   </div>
   <button class="block4-continue" id="block4-continue">Vamos lá! 🚀</button>
 </div>
@@ -1336,7 +1336,7 @@ body.golden{background:var(--gold-bg)}
     <div class="timeout-modal-ask">Deseja continuar ou reiniciar o quiz do início?</div>
     <div class="timeout-modal-btns">
       <button class="tm-btn-continue" id="tm-btn-continue"> Continuar jogando ▶</button>
-      <button class="tm-btn-restart" id="tm-btn-restart"> Reiniciar jogo 🔄</button>
+      <button class="tm-btn-restart" id="tm-btn-restart"> Reiniciar do início 🔄</button>
     </div>
   </div>
 </div>
@@ -1650,10 +1650,24 @@ function shuffleArr(arr){
 function buildGameQuestions(bank){
   const game=[];
   for(let b=0;b<4;b++){
-    const pool=shuffleArr(bank.filter(q=>q.block===b));
-    game.push(...pool.slice(0,4));
+    const pool=shuffleArr(bank.filter(q=>q.block===b).slice());
+    game.push(...pool.slice(0,4).map(shuffleQuestionOptions));
   }
   return game;
+}
+
+// Embaralha as alternativas de UMA pergunta e remapeia a resposta certa.
+// A correção segue o TEXTO da alternativa (via flag), não a posição original —
+// então a resposta certa deixa de ficar sempre na mesma letra (ex.: sempre "B").
+// Perguntas livres (Bloco 4, ans=-1) também têm a ordem embaralhada, mas seguem
+// sem resposta certa. Retorna um CLONE (não muta o banco) para reembaralhar a cada jogo.
+function shuffleQuestionOptions(q){
+  const tagged = q.opts.map((text,i)=>({ text, correct: i===q.ans }));
+  for(let i=tagged.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [tagged[i],tagged[j]]=[tagged[j],tagged[i]];
+  }
+  return { ...q, opts: tagged.map(o=>o.text), ans: q.ans<0 ? -1 : tagged.findIndex(o=>o.correct) };
 }
 
 let QUESTION_BANK = [];
