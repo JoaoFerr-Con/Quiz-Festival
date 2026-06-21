@@ -1335,8 +1335,8 @@ body.golden{background:var(--gold-bg)}
     <div class="timeout-modal-resp" id="tm-correct-text">A resposta correta era: <strong id="tm-correct-answer"></strong></div>
     <div class="timeout-modal-ask">Deseja continuar ou reiniciar o quiz do início?</div>
     <div class="timeout-modal-btns">
-      <button class="tm-btn-continue" id="tm-btn-continue">▶ Continuar jogando</button>
-      <button class="tm-btn-restart" id="tm-btn-restart">🔄 Reiniciar do início</button>
+      <button class="tm-btn-continue" id="tm-btn-continue"> Continuar jogando ▶</button>
+      <button class="tm-btn-restart" id="tm-btn-restart"> Reiniciar jogo 🔄</button>
     </div>
   </div>
 </div>
@@ -1346,15 +1346,15 @@ body.golden{background:var(--gold-bg)}
 <div class="already-overlay" id="already-overlay" role="dialog" aria-modal="true" aria-label="Você já participou">
   <div class="already-modal">
     <div class="already-icon">🏆</div>
-    <div class="already-title" id="already-title">Você já completou o quiz!</div>
-    <div class="already-sub" id="already-sub">Aqui está o que você conquistou:</div>
+    <div class="already-title" id="already-title">Usuário já cadastrado</div>
+    <div class="already-sub" id="already-sub">Você deseja reiniciar sua pontuação?</div>
     <div class="already-stats">
       <div class="already-stat"><div class="already-stat-val" id="already-xp">0</div><div class="already-stat-lbl">XP</div></div>
       <div class="already-stat"><div class="already-stat-val" id="already-acertos">0/12</div><div class="already-stat-lbl">Acertos</div></div>
     </div>
     <div class="already-btns">
-      <button class="already-btn-primary" id="already-cert">🎖️ Baixar meu certificado</button>
-      <button class="already-btn-secondary" id="already-restart">🔄 Refazer o quiz</button>
+      <button class="already-btn-primary" id="already-cert">Não, ver meu certificado</button>
+      <button class="already-btn-secondary" id="already-restart">Sim, reiniciar pontuação</button>
     </div>
   </div>
 </div>
@@ -1410,6 +1410,7 @@ body.golden{background:var(--gold-bg)}
       </div>
       <div class="conta-res-patente" id="conta-res-patente"></div>
       <div class="conta-res-status" id="conta-res-status"></div>
+      <button class="already-btn-primary" id="conta-cert-btn" style="display:none;width:100%;margin-top:14px">🎖️ Baixar certificado</button>
     </div>
   </div>
 </div>
@@ -1503,8 +1504,10 @@ async function salvarResultado(cadastro, xp, acertos, patente, completou, tentat
   try{
 
     const respostas = state.answersLog.filter(l => !l.isFree && l.timeLeft !== undefined);
+    // Tempo gasto na pergunta = 30 (timer cheio) - timeLeft. timeLeft é clampado
+    // em [0,30] e o resultado em >=0, então tempo_medio nunca fica negativo.
     const tempoMedio = respostas.length > 0
-      ? Math.round(respostas.reduce((s,l) => s + (20 - Math.max(0,l.timeLeft)), 0) / respostas.length)
+      ? Math.max(0, Math.round(respostas.reduce((s,l) => s + (30 - Math.min(30, Math.max(0, l.timeLeft))), 0) / respostas.length))
       : 30;
 
 
@@ -1535,12 +1538,17 @@ async function salvarResultado(cadastro, xp, acertos, patente, completou, tentat
 }
 
 
+// Normaliza CPF para só dígitos — chave de unicidade real do participante.
+const normCpf = c => String(c||'').replace(/\D/g,'');
+
 async function buscarRanking(){
   const sb = getSupabase();
+  const meuCpf = normCpf(state.cadastro.cpf);
   const jogadorAtual = {
     nome: state.cadastro.nome || state.nick,
     xp: state.xp,
     patente: getPatente(state.correct).title,
+    cpf: meuCpf,
     isMe: true
   };
 
@@ -1549,13 +1557,14 @@ async function buscarRanking(){
   try{
     await new Promise(r => setTimeout(r, 1500));
 
+    // Busca mais de 10 porque a deduplicação por CPF pode descartar linhas.
     const { data, error } = await sb
       .from('participantes')
-      .select('nome, xp, patente, tempo_medio')
+      .select('nome, cpf, xp, patente, tempo_medio')
       .gt('xp', 0)
       .order('xp', { ascending: false })
       .order('tempo_medio', { ascending: true })
-      .limit(10);
+      .limit(60);
 
     if(error){
       console.error('[Quiz] Erro ao buscar ranking:', error.message);
@@ -1565,15 +1574,26 @@ async function buscarRanking(){
       return [jogadorAtual];
     }
 
-    const rows = (data || []).map(p => ({
-      nome: p.nome,
-      xp:   p.xp,
-      patente: p.patente,
-      isMe: p.nome === jogadorAtual.nome && p.xp === state.xp
-    }));
+    // Deduplicação por CPF normalizado: como os dados vêm ordenados por xp DESC,
+    // o primeiro registro de cada CPF é o de maior pontuação — os demais (registros
+    // antigos de teste, de antes da constraint cpf_unico) são descartados do ranking.
+    const vistos = new Set();
+    const rows = [];
+    (data || []).forEach(p => {
+      const c = normCpf(p.cpf);
+      if(c && vistos.has(c)) return;
+      if(c) vistos.add(c);
+      rows.push({
+        nome: p.nome,
+        xp:   p.xp,
+        patente: p.patente,
+        cpf: c,
+        isMe: !!c && c === meuCpf   // identidade por CPF, não por nome+xp
+      });
+    });
 
-    const jaEsta = rows.some(r => r.isMe);
-    if(!jaEsta) rows.push(jogadorAtual);
+    // Garante o jogador atual no ranking caso o resultado ainda não esteja salvo.
+    if(meuCpf && !vistos.has(meuCpf)) rows.push(jogadorAtual);
 
     return rows.sort((a,b)=> b.xp - a.xp || 0).slice(0,10);
   }catch(e){
@@ -1612,7 +1632,9 @@ async function fetchQuestionBank(){
     emoji: BLOCK_EMOJI[Number(row.block)] || '❓',
     q: row.question_text,
     opts: [row.option_A, row.option_B, row.option_C, row.option_D],
-    ans: Number(row.correct_answer),
+    // Bloco 4 (índice 3) é participativo: sem certo/errado. Forçamos ans=-1
+    // para que seja sempre "livre" — dá XP mas NÃO conta como acerto.
+    ans: Number(row.block) === 3 ? -1 : Number(row.correct_answer),
     info: row.did_you_know || ''
   }));
 }
@@ -2211,7 +2233,7 @@ function showAlreadyCompletedModal(participante, cadastro){
 
   xpEl.textContent = xp;
   accEl.textContent = acertos + '/12';
-  subEl.textContent = `Você já é ${patenteObj.title}! Aqui está o que você conquistou:`;
+  subEl.textContent = `Você já é ${patenteObj.title}. Deseja reiniciar sua pontuação?`;
 
   overlay.classList.add('show');
 
@@ -3152,7 +3174,7 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     const cpfFormatado = cpfRaw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
     const {data,error}=await sb
       .from('participantes')
-      .select('nome,xp,acertos,patente,completou')
+      .select('nome,cidade,xp,acertos,patente,completou')
       .or('cpf.eq.'+cpfRaw+',cpf.eq.'+cpfFormatado)
       .limit(1);
 
@@ -3165,11 +3187,38 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     const p=data[0];
     _el('conta-res-nome').textContent=p.nome||nome;
     _el('conta-res-xp').textContent=p.xp||0;
-    _el('conta-res-acertos').textContent=(p.acertos||0)+'/16';
+    _el('conta-res-acertos').textContent=(p.acertos||0)+'/12';
     _el('conta-res-patente').textContent=p.patente?'🏅 '+p.patente:'';
     _el('conta-res-status').textContent=p.completou
       ?'✅ Participação completa'
       :'⏳ Iniciada mas não concluída';
+
+    // Botão de certificado — só quando a participação foi concluída.
+    const certBtn=_el('conta-cert-btn');
+    if(p.completou){
+      certBtn.style.display='block';
+      certBtn.onclick=()=>{
+        const acertos=p.acertos||0;
+        const patenteObj=getPatente(acertos);
+        _el('cert-name').textContent=p.nome||nome;
+        _el('cert-city').textContent=p.cidade||'';
+        _el('cert-patente-emoji').textContent=patenteObj.emoji;
+        _el('cert-patente-name').textContent=patenteObj.title;
+        _el('cert-xp').textContent=p.xp||0;
+        _el('cert-acertos').textContent=acertos+'/12';
+        const resTitle=_el('res-title'), resRank=_el('res-rank'), resSub=_el('res-sub');
+        if(resTitle) resTitle.textContent=patenteObj.title+'!';
+        if(resRank)  resRank.textContent =patenteObj.emoji;
+        if(resSub)   resSub.textContent  ='Barcarena te agradece 🍍';
+        _el('conta-modal-overlay').classList.remove('show');
+        showScreen('screen-result');
+        toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇');
+      };
+    } else {
+      certBtn.style.display='none';
+      certBtn.onclick=null;
+    }
+
     _el('conta-resultado').classList.add('show');
   }catch(e){
     btn.disabled=false; btn.textContent='Consultar →';
