@@ -1255,7 +1255,7 @@ body.golden{background:var(--gold-bg)}
         </div>
         <div class="cert-stats">
           <div class="cert-stat"><div class="v" id="cert-xp">0</div><div class="l">XP TOTAL</div></div>
-          <div class="cert-stat"><div class="v" id="cert-acertos">0/12</div><div class="l">ACERTOS</div></div>
+          <div class="cert-stat"><div class="v" id="cert-acertos">0/16</div><div class="l">ACERTOS</div></div>
         </div>
         <div class="cert-body-text">Reconhecimento pela participacao ativa na construcao do futuro de Barcarena atraves do Festival do Abacaxi 2026.</div>
         <div class="cert-footer">
@@ -1319,9 +1319,9 @@ body.golden{background:var(--gold-bg)}
   <div class="pineapple-shadow"></div>
   <div class="block4-title">🎉 <em>RODADA BÔNUS!</em></div>
   <div class="block4-desc">
-    As próximas perguntas <strong> não têm resposta certa ou errada </strong>.<br>
-    Queremos ouvir a sua opinião para construir o <strong> futuro de Barcarena!</strong><br>
-    Participe, sua voz importa! 
+    As próximas perguntas <strong>não têm resposta certa ou errada</strong>.<br>
+    Queremos ouvir a sua opinião para construir o <strong>futuro de Barcarena!</strong><br>
+    Participe — sua voz importa! 🍍
   </div>
   <button class="block4-continue" id="block4-continue">Vamos lá! 🚀</button>
 </div>
@@ -1335,8 +1335,8 @@ body.golden{background:var(--gold-bg)}
     <div class="timeout-modal-resp" id="tm-correct-text">A resposta correta era: <strong id="tm-correct-answer"></strong></div>
     <div class="timeout-modal-ask">Deseja continuar ou reiniciar o quiz do início?</div>
     <div class="timeout-modal-btns">
-      <button class="tm-btn-continue" id="tm-btn-continue"> Continuar jogando ▶</button>
-      <button class="tm-btn-restart" id="tm-btn-restart"> Reiniciar do início 🔄</button>
+      <button class="tm-btn-continue" id="tm-btn-continue">▶ Continuar jogando</button>
+      <button class="tm-btn-restart" id="tm-btn-restart">🔄 Reiniciar do início</button>
     </div>
   </div>
 </div>
@@ -1718,6 +1718,13 @@ let state={
 
 
 const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+// Perguntas que contam para acerto/patente (Blocos 1–3). Bloco 4 é participativo.
+const PERGUNTAS_OBRIGATORIAS = 12;
+// Total de perguntas do quiz, exibido no certificado como "acertos/total".
+// Inclui as 4 do Bloco 4 (participativo) → máximo exibível = 12/16.
+// Para mostrar sobre as obrigatórias, troque para PERGUNTAS_OBRIGATORIAS.
+const TOTAL_PERGUNTAS = 16;
+
 function getPatente(correct){return PATENTES.find(p=>correct>=p.minAcertos)||PATENTES[PATENTES.length-1];}
 function getBlockMeta(blockIdx){return BLOCKS_META[blockIdx];}
 
@@ -2842,6 +2849,15 @@ function showResult(){
   const patente=getPatente(state.correct);
 
   salvarResultado(state.cadastro, state.xp, state.correct, patente.title, state.completedGame);
+
+  renderResultScreen();
+}
+
+// Renderiza TODA a tela de resultado a partir do `state` atual, SEM efeitos
+// colaterais (não salva no banco, não limpa progresso, não grava recorde).
+// Usada ao terminar o quiz e também ao ver o certificado pela área "Minha Conta".
+function renderResultScreen(){
+  const patente=getPatente(state.correct);
   setTimeout(() => {
     const ne = document.getElementById('cert-name');
     const ce = document.getElementById('cert-city');
@@ -2855,7 +2871,7 @@ function showResult(){
     if(pe) pe.textContent = patente.emoji;
     if(pn) pn.textContent = patente.title;
     if(xe) xe.textContent = state.xp;
-    if(ae) ae.textContent = state.correct + '/12';
+    if(ae) ae.textContent = state.correct + '/' + TOTAL_PERGUNTAS;
     if(de) de.textContent = new Date().toLocaleDateString('pt-BR');
   }, 60);
 
@@ -3212,20 +3228,22 @@ _el('conta-buscar').addEventListener('click', async ()=>{
     if(p.completou){
       certBtn.style.display='block';
       certBtn.onclick=()=>{
-        const acertos=p.acertos||0;
-        const patenteObj=getPatente(acertos);
-        _el('cert-name').textContent=p.nome||nome;
-        _el('cert-city').textContent=p.cidade||'';
-        _el('cert-patente-emoji').textContent=patenteObj.emoji;
-        _el('cert-patente-name').textContent=patenteObj.title;
-        _el('cert-xp').textContent=p.xp||0;
-        _el('cert-acertos').textContent=acertos+'/12';
-        const resTitle=_el('res-title'), resRank=_el('res-rank'), resSub=_el('res-sub');
-        if(resTitle) resTitle.textContent=patenteObj.title+'!';
-        if(resRank)  resRank.textContent =patenteObj.emoji;
-        if(resSub)   resSub.textContent  ='Barcarena te agradece 🍍';
+        // Reconstrói o state a partir dos dados consultados, para que a tela de
+        // resultado (XP, patente, faixas, conquistas, ranking e certificado) seja
+        // montada por renderResultScreen() — sem regravar nada no banco.
+        const acertos = Math.min(PERGUNTAS_OBRIGATORIAS, p.acertos||0);
+        state.xp           = p.xp || 0;
+        state.correct      = acertos;
+        state.nick         = p.nome || nome;
+        state.cadastro     = { nome: p.nome||nome, cidade: p.cidade||'', cpf: cpfRaw };
+        state.completedGame= !!p.completou;
+        state.fastAns      = 0;
+        state.maxStreak    = 0;
+        state.qIdx         = 16;
+        state.earnedAchs   = new Set();
         _el('conta-modal-overlay').classList.remove('show');
         showScreen('screen-result');
+        renderResultScreen();
         toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇');
       };
     } else {
