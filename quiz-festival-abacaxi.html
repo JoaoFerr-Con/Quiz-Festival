@@ -1036,6 +1036,17 @@ body.golden{background:var(--gold-bg)}
 .btn-continue-journey:active{transform:scale(.97)}
 .btn-continue-journey:focus-visible{outline:2px solid var(--accent1);outline-offset:3px}
 
+.btn-continue-restart{
+  width:100%;padding:15px;margin-top:10px;
+  font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;letter-spacing:.3px;
+  background:var(--fail-bg);color:var(--fail-text);
+  border:1.5px solid var(--fail-border);border-radius:var(--radius-pill);
+  cursor:pointer;transition:all .25s;
+}
+.btn-continue-restart:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(255,61,119,0.28)}
+.btn-continue-restart:active{transform:scale(.97)}
+.btn-continue-restart:focus-visible{outline:2px solid var(--fail-border);outline-offset:3px}
+
 #screen-continue{justify-content:center}
 .continue-wrap{max-width:440px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .continue-back{
@@ -1197,7 +1208,7 @@ body.golden{background:var(--gold-bg)}
       </div>
       <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros. 🔒</p>
       <button type="submit" class="btn-primary" id="btn-start"> Iniciar jornada </button>
-      <button type="button" class="btn-continue-journey" id="btn-continue"> Já possui uma conta? Continue sua jornada </button>
+      <button type="button" class="btn-continue-journey" id="btn-continue"> ▶ Continuar jornada </button>
     </form>
   </div>
 
@@ -1222,8 +1233,9 @@ body.golden{background:var(--gold-bg)}
         </div>
         <div class="continue-msg" id="continue-msg" role="alert"></div>
         <button type="submit" class="btn-primary" id="continue-submit"> Continuar de onde parei → </button>
+        <button type="button" class="btn-continue-restart" id="continue-restart" style="display:none"> 🔄 Reiniciar e zerar pontuação </button>
       </form>
-      <p class="continue-hint"> A continuação fica disponível depois que você conclui a 1ª rodada. Use o mesmo aparelho em que começou. 🔒</p>
+      <p class="continue-hint">🔒 A continuação fica disponível depois que você conclui a 1ª rodada. Use o mesmo aparelho em que começou.</p>
     </div>
   </div>
 
@@ -1407,15 +1419,15 @@ body.golden{background:var(--gold-bg)}
 <div class="already-overlay" id="already-overlay" role="dialog" aria-modal="true" aria-label="Você já participou">
   <div class="already-modal">
     <div class="already-icon">🏆</div>
-    <div class="already-title" id="already-title">Usuário já cadastrado</div>
+    <div class="already-title" id="already-title">Você já é um Mestre do Festival! 🏆</div>
     <div class="already-sub" id="already-sub">Você deseja reiniciar sua pontuação?</div>
     <div class="already-stats">
       <div class="already-stat"><div class="already-stat-val" id="already-xp">0</div><div class="already-stat-lbl">XP</div></div>
       <div class="already-stat"><div class="already-stat-val" id="already-acertos">0/16</div><div class="already-stat-lbl">Acertos</div></div>
     </div>
     <div class="already-btns">
-      <button class="already-btn-primary" id="already-cert">Não, ver meu certificado</button>
-      <button class="already-btn-secondary" id="already-restart">Sim, reiniciar pontuação</button>
+      <button class="already-btn-primary" id="already-cert">Ver meu certificado</button>
+      <button class="already-btn-secondary" id="already-restart">Iniciar novamente (zerar)</button>
     </div>
   </div>
 </div>
@@ -2427,6 +2439,10 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
   const cpfErr    = document.getElementById('continue-cpf-error');
   const msgEl     = document.getElementById('continue-msg');
   const submitBtn = document.getElementById('continue-submit');
+  const restartBtn = document.getElementById('continue-restart');
+
+  // cadastro do usuário que já concluiu (preenchido ao oferecer o reinício)
+  let completedCadastro = null;
 
   function showMsg(text, ok){
     msgEl.textContent = text;
@@ -2435,20 +2451,51 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
   }
   function clearMsg(){ msgEl.classList.remove('show','ok'); msgEl.textContent=''; }
 
+  // Estado "já concluiu": troca o botão Continuar pelo botão de reiniciar.
+  function showCompletedState(cad){
+    completedCadastro = cad;
+    if(submitBtn)  submitBtn.style.display  = 'none';
+    if(restartBtn) restartBtn.style.display = 'block';
+  }
+  function resetCompletedState(){
+    completedCadastro = null;
+    if(restartBtn) restartBtn.style.display = 'none';
+    if(submitBtn)  submitBtn.style.display  = '';
+  }
+
+  // Confirmação antes de zerar a pontuação e jogar novamente.
+  if(restartBtn) restartBtn.addEventListener('click', ()=>{
+    const cad = completedCadastro;
+    if(!cad) return;
+    showResumeChoice({
+      title:'Reiniciar e zerar pontuação? 🔄',
+      sub:'Você já concluiu o quiz. Ao reiniciar, sua pontuação atual será ZERADA e você jogará novamente do início. Deseja continuar?',
+      primaryLabel:'Sim, reiniciar do zero →',
+      secondaryLabel:'Cancelar',
+      allowDismiss:true,
+      onPrimary: ()=>{ resetCompletedState(); clearMsg(); limparProgresso(cad); proceedToStartForceReplay(cad); },
+      onSecondary: ()=>{}
+    });
+  });
+
   if(cpfInput){
     cpfInput.addEventListener('input', e=>{
       e.target.value = maskCpf(e.target.value);
       e.target.classList.remove('invalid');
       cpfErr.textContent = '';
       clearMsg();
+      resetCompletedState();
     });
   }
+  const nomeInputEl = document.getElementById('continue-nome');
+  if(nomeInputEl) nomeInputEl.addEventListener('input', ()=>{ clearMsg(); resetCompletedState(); });
 
   // Abrir a tela de continuação
   const btnContinue = document.getElementById('btn-continue');
   if(btnContinue) btnContinue.addEventListener('click', ()=>{
     unlockAudio();
     clearMsg();
+    resetCompletedState();
     cpfInput.classList.remove('invalid'); cpfErr.textContent='';
     submitBtn.disabled = false; submitBtn.textContent = 'Continuar de onde parei →';
     const nomeAtual = document.getElementById('input-nome').value.trim();
@@ -2460,13 +2507,14 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
   });
 
   const btnBack = document.getElementById('continue-back');
-  if(btnBack) btnBack.addEventListener('click', ()=>{ clearMsg(); showScreen('screen-intro'); });
+  if(btnBack) btnBack.addEventListener('click', ()=>{ clearMsg(); resetCompletedState(); showScreen('screen-intro'); });
 
   const form = document.getElementById('continue-form');
   if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();
     unlockAudio();
     clearMsg();
+    resetCompletedState();
 
     const nome   = document.getElementById('continue-nome').value.trim();
     const cpfRaw = document.getElementById('continue-cpf').value.trim();
@@ -2523,7 +2571,8 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
         return;
       }
       if(p.completou){
-        showMsg('Você já concluiu o quiz — não há jornada para continuar. 🍍 Toque em "Voltar" e veja seu certificado em "Minha Conta".');
+        showMsg('Você já concluiu o quiz! 🍍 Veja seu certificado em "Voltar" → "Minha Conta", ou reinicie abaixo para jogar de novo (sua pontuação será zerada).');
+        showCompletedState({ nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' });
         return;
       }
       const nextBlock = Number(p.ultimo_bloco)||0;
@@ -2632,7 +2681,7 @@ function showAlreadyCompletedModal(participante, cadastro){
 
   xpEl.textContent = xp;
   accEl.textContent = Math.min(PERGUNTAS_OBRIGATORIAS, acertos) + '/' + TOTAL_PERGUNTAS;
-  subEl.textContent = `Você já é ${patenteObj.title}. Deseja reiniciar sua pontuação?`;
+  subEl.textContent = `Você já se tornou ${patenteObj.title} e concluiu o quiz com este CPF. Deseja iniciar novamente? Sua pontuação atual será zerada.`;
 
   overlay.classList.add('show');
 
@@ -2719,10 +2768,10 @@ function proceedToStart(cadastro, opts){
       if(localCk || supaResumable){
         const rodada = ((localCk ? localCk.nextBlock : Number(supa.ultimo_bloco)) || 1) + 1;
         showResumeChoice({
-          title:'Conta encontrada! 👋',
-          sub:`Já existe uma jornada para este CPF — você parou na Rodada ${rodada}. Deseja continuar de onde parou ou refazer o quiz do zero?`,
+          title:'Você já possui uma jornada! 👋',
+          sub:`Usuário já possui uma jornada em andamento (parou na Rodada ${rodada}). Deseja continuar de onde parou ou iniciar tudo novamente do zero?`,
           primaryLabel:'Continuar de onde parei →',
-          secondaryLabel:'Refazer do zero',
+          secondaryLabel:'Iniciar novamente (zerar)',
           allowDismiss:true,
           onPrimary: async ()=>{
             if(localCk){ entrarContinuacao(localCk); }
@@ -2731,11 +2780,11 @@ function proceedToStart(cadastro, opts){
           onSecondary: ()=>{ limparProgresso(cadastro); proceedToStartForceReplay(cadastro); }
         });
       } else {
-        // CPF cadastrado, mas sem progresso para continuar.
+        // CPF cadastrado, mas sem jornada avançada para continuar.
         showResumeChoice({
-          title:'Conta já cadastrada 📋',
-          sub:'Identificamos seu CPF, mas não há uma jornada em andamento para continuar. Deseja começar o quiz do zero?',
-          primaryLabel:'Começar do zero →',
+          title:'Você já tem um cadastro 📋',
+          sub:'Identificamos seu CPF, mas você ainda não avançou em nenhuma jornada para continuar. Deseja iniciar sua jornada agora?',
+          primaryLabel:'Iniciar minha jornada →',
           secondaryLabel:'Cancelar',
           allowDismiss:true,
           onPrimary: ()=>{ limparProgresso(cadastro); proceedToStartForceReplay(cadastro); },
