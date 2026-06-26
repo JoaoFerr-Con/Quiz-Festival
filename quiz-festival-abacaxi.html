@@ -1520,8 +1520,7 @@ async function verificarParticipante(cadastro){
       .select('id,nome,cidade,cpf,xp,acertos,patente,completou,max_streak,fast_ans')
       .eq('cpf',cadastro.cpf)
       .limit(1);
-    const timeoutP=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000));
-    const {data,error}=await Promise.race([query,timeoutP]);
+    const {data,error}=await query;
     if(error||!data||data.length===0) return {podeJogar:true,mensagem:'',jaExiste:false};
     const p=data[0];
     if(p.completou){
