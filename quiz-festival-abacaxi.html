@@ -1520,7 +1520,8 @@ async function verificarParticipante(cadastro){
       .select('id,nome,cidade,cpf,xp,acertos,patente,completou,max_streak,fast_ans')
       .eq('cpf',cadastro.cpf)
       .limit(1);
-    const {data,error}=await Promise.race([query,timeout]);
+    const timeoutP=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000));
+    const {data,error}=await Promise.race([query,timeoutP]);
     if(error||!data||data.length===0) return {podeJogar:true,mensagem:'',jaExiste:false};
     const p=data[0];
     if(p.completou){
@@ -2571,13 +2572,28 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
         return;
       }
       if(p.completou){
-        showMsg('Você já concluiu o quiz! 🍍 Veja seu certificado em "Voltar" → "Minha Conta", ou reinicie abaixo para jogar de novo (sua pontuação será zerada).');
-        showCompletedState({ nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' });
+        showResumeChoice({
+          title:'Você já é um Mestre do Festival! 🏆',
+          sub:'Você já concluiu o quiz com este CPF. Deseja jogar novamente (sua pontuação será zerada) ou ver o seu certificado?',
+          primaryLabel:'Jogar novamente (zerar) →',
+          secondaryLabel:'Ver meu certificado',
+          allowDismiss:true,
+          onPrimary: ()=> refazerDoZero({ nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' }),
+          onSecondary: ()=>{ mostrarResultadoDe(p, p.nome, p.cidade, cpfFmt); toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇'); }
+        });
         return;
       }
       const nextBlock = Number(p.ultimo_bloco)||0;
       if(nextBlock < 1){
-        showMsg('Você ainda não avançou além da 1ª rodada, então não há progresso para continuar. Toque em "Voltar" e inicie sua jornada. 🚀');
+        showResumeChoice({
+          title:'Sua jornada ainda não começou 🚀',
+          sub:'Encontramos seu cadastro, mas você ainda não avançou além da 1ª rodada — então não há progresso para continuar. Deseja iniciar sua jornada agora?',
+          primaryLabel:'Iniciar minha jornada →',
+          secondaryLabel:'Voltar ao início',
+          allowDismiss:true,
+          onPrimary: ()=> refazerDoZero({ nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' }),
+          onSecondary: ()=>{ clearMsg(); resetCompletedState(); showScreen('screen-intro'); }
+        });
         return;
       }
       const rodada = nextBlock + 1;
