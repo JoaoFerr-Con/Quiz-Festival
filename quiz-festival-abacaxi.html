@@ -1036,6 +1036,10 @@ body.golden{background:var(--gold-bg)}
 .btn-continue-journey:active{transform:scale(.97)}
 .btn-continue-journey:focus-visible{outline:2px solid var(--accent1);outline-offset:3px}
 
+.welcome-actions{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.welcome-actions .btn-primary{font-size:17px;padding:18px}
+.welcome-actions .btn-continue-journey{margin-top:0}
+
 .btn-continue-restart{
   width:100%;padding:15px;margin-top:10px;
   font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;letter-spacing:.3px;
@@ -1183,59 +1187,68 @@ body.golden{background:var(--gold-bg)}
       <span class="cert-preview-icon">🏅</span>
       <div class="cert-preview-text">
         <h4>Ganhe seu Certificado Digital!</h4>
-        <p>Complete todas as rodadas e receba o <strong>Cartão de Cidadão Participativo</strong> — compartilhe nas redes e apresente nos estandes do festival!</p>
+        <p>Complete todas as rodadas e receba o <strong>Cartão de Cidadão Participativo</strong>  compartilhe nas redes e apresente nos estandes do festival!</p>
       </div>
     </div>
-    <!-- ── Formulário de cadastro: Nome / CPF / Cidade ──────────────── -->
-    <form id="cadastro-form" class="cadastro-form" autocomplete="off">
-      <div class="field-wrap">
-        <label for="input-nome">Nome completo</label>
-        <input id="input-nome" type="text" placeholder="Nome" maxlength="60" required>
-      </div>
-      <div class="field-wrap">
-        <label for="input-cpf">CPF</label>
-        <input id="input-cpf" type="tel" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required autocomplete="off">
-        <span class="field-error" id="cpf-error"></span>
-      </div>
-      <div class="field-wrap">
-        <label for="input-cidade">Cidade</label>
-        <input id="input-cidade" type="text" placeholder="Barcarena" maxlength="40" required>
-      </div>
-      <div class="field-wrap">
-        <label for="input-tel">Celular</label>
-        <input id="input-tel" type="tel" inputmode="numeric" placeholder="(91) 9 0000-0000" maxlength="16" required autocomplete="off">
-        <span class="field-error" id="tel-error"></span>
-      </div>
-      <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros. 🔒</p>
-      <button type="submit" class="btn-primary" id="btn-start"> Iniciar jornada </button>
-      <button type="button" class="btn-continue-journey" id="btn-continue"> Ja possui cadastro? Continue sua jornada ▶  </button>
-    </form>
+    <div class="welcome-actions">
+      <button type="button" class="btn-primary" id="btn-new-journey">  Iniciar nova jornada </button>
+      <button type="button" class="btn-continue-journey" id="btn-have-account">  Já possue cadastro? Continue de onde parou </button>
+    </div>
   </div>
 
-  <!-- ══ CONTINUAR JORNADA ══ -->
+  <!-- ══ CADASTRO (Nova Jornada) ══ -->
+  <div class="screen" id="screen-cadastro">
+    <div class="continue-wrap">
+      <button type="button" class="continue-back" id="cadastro-back">← Voltar ao início</button>
+      <div class="continue-head">
+        <div class="continue-emoji">📝</div>
+        <h2>Criar cadastro</h2>
+        <p>Preencha seus dados para começar sua jornada no quiz.</p>
+      </div>
+      <form id="cadastro-form" class="cadastro-form" autocomplete="off">
+        <div class="field-wrap">
+          <label for="input-nome">Nome completo</label>
+          <input id="input-nome" type="text" placeholder="Nome" maxlength="60" required>
+        </div>
+        <div class="field-wrap">
+          <label for="input-cpf">CPF</label>
+          <input id="input-cpf" type="tel" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required autocomplete="off">
+          <span class="field-error" id="cpf-error"></span>
+        </div>
+        <div class="field-wrap">
+          <label for="input-cidade">Cidade</label>
+          <input id="input-cidade" type="text" placeholder="Barcarena" maxlength="40" required>
+        </div>
+        <div class="field-wrap">
+          <label for="input-tel">Celular</label>
+          <input id="input-tel" type="tel" inputmode="numeric" placeholder="(91) 9 0000-0000" maxlength="16" required autocomplete="off">
+          <span class="field-error" id="tel-error"></span>
+        </div>
+        <p class="privacy-note"> Seus dados são usados apenas para registro de participação no festival e geração do seu certificado. Não compartilhamos com terceiros. 🔒</p>
+        <button type="submit" class="btn-primary" id="btn-start"> Iniciar jornada </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══ JÁ TENHO CADASTRO / CONTINUAR (apenas CPF) ══ -->
   <div class="screen" id="screen-continue">
     <div class="continue-wrap">
       <button type="button" class="continue-back" id="continue-back">← Voltar ao início</button>
       <div class="continue-head">
-        <div class="continue-emoji">▶️</div>
-        <h2>Continuar jornada</h2>
-        <p>Já começou o quiz? Informe seu <strong>nome</strong> e <strong>CPF</strong> para voltar de onde parou.</p>
+        <div class="continue-emoji">👋</div>
+        <h2>Já tenho cadastro</h2>
+        <p>Informe seu <strong>CPF</strong> para voltar de onde parou ou reiniciar sua jornada.</p>
       </div>
       <form id="continue-form" class="cadastro-form" autocomplete="off">
-        <div class="field-wrap">
-          <label for="continue-nome">Nome completo</label>
-          <input id="continue-nome" type="text" placeholder="Nome" maxlength="60" required>
-        </div>
         <div class="field-wrap">
           <label for="continue-cpf">CPF</label>
           <input id="continue-cpf" type="tel" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required autocomplete="off">
           <span class="field-error" id="continue-cpf-error"></span>
         </div>
         <div class="continue-msg" id="continue-msg" role="alert"></div>
-        <button type="submit" class="btn-primary" id="continue-submit"> Continuar de onde parei → </button>
-        <button type="button" class="btn-continue-restart" id="continue-restart" style="display:none"> 🔄 Reiniciar e zerar pontuação </button>
+        <button type="submit" class="btn-primary" id="continue-submit"> Avançar → </button>
       </form>
-      <p class="continue-hint"> A continuação fica disponível depois que você conclui a 1ª rodada. Use o mesmo aparelho em que começou. 🔒</p>
+      <p class="continue-hint"> Buscamos seu CPF no sistema e mostramos suas opções. 🔒</p>
     </div>
   </div>
 
@@ -1512,13 +1525,21 @@ function getSupabase(){
 }
 
 
+/* Filtro de CPF tolerante a máscara: casa tanto "000.000.000-00" quanto só dígitos,
+   evitando duplicidade/“não encontrado” quando o registro foi salvo em outro formato. */
+function cpfOrFilter(c){
+  const m = String(c||'').trim();
+  const d = m.replace(/\D/g,'');
+  return (d && d!==m) ? `cpf.eq.${m},cpf.eq.${d}` : `cpf.eq.${m}`;
+}
+
 async function verificarParticipante(cadastro){
   const sb=getSupabase();
   if(!sb) return {podeJogar:true, mensagem:'', jaExiste:false};
   try{
     const query=sb.from('participantes')
       .select('id,nome,cidade,cpf,xp,acertos,patente,completou,max_streak,fast_ans')
-      .eq('cpf',cadastro.cpf)
+      .or(cpfOrFilter(cadastro.cpf))
       .limit(1);
     const {data,error}=await query;
     if(error||!data||data.length===0) return {podeJogar:true,mensagem:'',jaExiste:false};
@@ -1589,7 +1610,7 @@ async function salvarResultado(cadastro, xp, acertos, patente, completou, tentat
     const { data, error: fetchErr } = await sb
       .from('participantes')
       .select('id')
-      .eq('cpf', cadastro.cpf)
+      .or(cpfOrFilter(cadastro.cpf))
       .order('criado_em', {ascending: false})
       .limit(1);
 
@@ -1622,7 +1643,7 @@ async function salvarProgressoBloco(cadastro, nextBlock){
   try{
     const { data, error: fErr } = await sb
       .from('participantes').select('id')
-      .eq('cpf', cadastro.cpf)
+      .or(cpfOrFilter(cadastro.cpf))
       .order('criado_em', {ascending:false}).limit(1);
     if(fErr || !data || data.length===0) return;
     const { error } = await sb.from('participantes')
@@ -1643,7 +1664,7 @@ async function buscarProgressoBloco(cpf){
     const { data, error } = await sb
       .from('participantes')
       .select('nome,cidade,cpf,xp,acertos,completou,max_streak,fast_ans,ultimo_bloco')
-      .eq('cpf', cpf)
+      .or(cpfOrFilter(cpf))
       .order('criado_em', {ascending:false}).limit(1);
     if(error || !data || data.length===0) return null;
     return data[0];
@@ -2331,7 +2352,7 @@ async function resetarProgressoBloco(cadastro){
   try{
     const { data, error: fErr } = await sb
       .from('participantes').select('id')
-      .eq('cpf', cadastro.cpf)
+      .or(cpfOrFilter(cadastro.cpf))
       .order('criado_em', {ascending:false}).limit(1);
     if(fErr || !data || data.length===0) return;
     await sb.from('participantes').update({ ultimo_bloco: 0 }).eq('id', data[0].id);
@@ -2344,6 +2365,31 @@ function limparProgresso(cadastro){
   clearProgress(cpf);
   clearCheckpoint(cpf);
   resetarProgressoBloco(cadastro);
+}
+
+/* Zera TUDO no Supabase (xp, acertos, max_streak, fast_ans, completou, ultimo_bloco)
+   — usado no "Reiniciar Quiz". Tolerante a colunas ausentes. */
+async function zerarPontuacaoSupabase(cadastro){
+  const sb = getSupabase();
+  if(!sb || !cadastro || !cadastro.cpf) return;
+  try{
+    const { data, error: fErr } = await sb
+      .from('participantes').select('id')
+      .or(cpfOrFilter(cadastro.cpf))
+      .order('criado_em', {ascending:false}).limit(1);
+    if(fErr || !data || data.length===0) return;
+    await sb.from('participantes').update({
+      xp:0, acertos:0, max_streak:0, fast_ans:0, completou:false, ultimo_bloco:0
+    }).eq('id', data[0].id);
+  }catch(e){ /* silencioso: o jogo segue mesmo se o reset remoto falhar */ }
+}
+
+/* Reinicia o quiz do zero: limpa local + zera pontuação no banco + recomeça. */
+function reiniciarQuiz(cad){
+  limparProgresso(cad);
+  zerarPontuacaoSupabase(cad);
+  showScreen('screen-intro');
+  proceedToStartForceReplay(cad);
 }
 
 /* Modal reutilizável de escolha — reaproveita o #resume-overlay.
@@ -2422,7 +2468,7 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
   return true;
 }
 
-/* ════════════════ CONTINUAR JORNADA ════════════════ */
+/* ════════════ NOVA JORNADA / JÁ TENHO CADASTRO (fluxo de telas) ════════════ */
 (function(){
   const maskCpf = v => {
     v = v.replace(/\D/g,'').slice(0,11);
@@ -2431,18 +2477,11 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
     if(v.length>3) return v.replace(/(\d{3})(\d{1,3})/,'$1.$2');
     return v;
   };
-  // remove acentos + normaliza para comparar nomes com tolerância
-  const normNome = s => String(s||'').trim().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
 
   const cpfInput  = document.getElementById('continue-cpf');
   const cpfErr    = document.getElementById('continue-cpf-error');
   const msgEl     = document.getElementById('continue-msg');
   const submitBtn = document.getElementById('continue-submit');
-  const restartBtn = document.getElementById('continue-restart');
-
-  // cadastro do usuário que já concluiu (preenchido ao oferecer o reinício)
-  let completedCadastro = null;
 
   function showMsg(text, ok){
     msgEl.textContent = text;
@@ -2451,76 +2490,60 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
   }
   function clearMsg(){ msgEl.classList.remove('show','ok'); msgEl.textContent=''; }
 
-  // Estado "já concluiu": troca o botão Continuar pelo botão de reiniciar.
-  function showCompletedState(cad){
-    completedCadastro = cad;
-    if(submitBtn)  submitBtn.style.display  = 'none';
-    if(restartBtn) restartBtn.style.display = 'block';
-  }
-  function resetCompletedState(){
-    completedCadastro = null;
-    if(restartBtn) restartBtn.style.display = 'none';
-    if(submitBtn)  submitBtn.style.display  = '';
-  }
-
-  // Confirmação antes de zerar a pontuação e jogar novamente.
-  if(restartBtn) restartBtn.addEventListener('click', ()=>{
-    const cad = completedCadastro;
-    if(!cad) return;
-    showResumeChoice({
-      title:'Reiniciar e zerar pontuação? 🔄',
-      sub:'Você já concluiu o quiz. Ao reiniciar, sua pontuação atual será ZERADA e você jogará novamente do início. Deseja continuar?',
-      primaryLabel:'Sim, reiniciar do zero →',
-      secondaryLabel:'Cancelar',
-      allowDismiss:true,
-      onPrimary: ()=>{ resetCompletedState(); clearMsg(); limparProgresso(cad); proceedToStartForceReplay(cad); },
-      onSecondary: ()=>{}
-    });
-  });
-
   if(cpfInput){
     cpfInput.addEventListener('input', e=>{
       e.target.value = maskCpf(e.target.value);
       e.target.classList.remove('invalid');
       cpfErr.textContent = '';
       clearMsg();
-      resetCompletedState();
     });
   }
-  const nomeInputEl = document.getElementById('continue-nome');
-  if(nomeInputEl) nomeInputEl.addEventListener('input', ()=>{ clearMsg(); resetCompletedState(); });
 
-  // Abrir a tela de continuação
-  const btnContinue = document.getElementById('btn-continue');
-  if(btnContinue) btnContinue.addEventListener('click', ()=>{
+  // ── Tela inicial: dois botões principais ──────────────────────────────
+  const btnNew = document.getElementById('btn-new-journey');
+  if(btnNew) btnNew.addEventListener('click', ()=>{
     unlockAudio();
-    clearMsg();
-    resetCompletedState();
-    cpfInput.classList.remove('invalid'); cpfErr.textContent='';
-    submitBtn.disabled = false; submitBtn.textContent = 'Continuar de onde parei →';
-    const nomeAtual = document.getElementById('input-nome').value.trim();
-    const cpfAtual  = document.getElementById('input-cpf').value.trim();
-    if(nomeAtual) document.getElementById('continue-nome').value = nomeAtual;
-    if(cpfAtual)  document.getElementById('continue-cpf').value  = maskCpf(cpfAtual);
-    showScreen('screen-continue');
-    setTimeout(()=>document.getElementById('continue-nome').focus(), 60);
+    showScreen('screen-cadastro');
+    setTimeout(()=>{ const n=document.getElementById('input-nome'); if(n) n.focus(); }, 60);
   });
 
-  const btnBack = document.getElementById('continue-back');
-  if(btnBack) btnBack.addEventListener('click', ()=>{ clearMsg(); resetCompletedState(); showScreen('screen-intro'); });
+  const btnHave = document.getElementById('btn-have-account');
+  if(btnHave) btnHave.addEventListener('click', ()=>{
+    unlockAudio();
+    clearMsg();
+    cpfInput.classList.remove('invalid'); cpfErr.textContent='';
+    submitBtn.disabled = false; submitBtn.textContent = 'Avançar →';
+    // pré-preenche o CPF se o usuário já digitou no cadastro
+    const cpfAtual = (document.getElementById('input-cpf')||{}).value || '';
+    if(cpfAtual.trim()) cpfInput.value = maskCpf(cpfAtual);
+    showScreen('screen-continue');
+    setTimeout(()=>cpfInput.focus(), 60);
+  });
 
+  // Voltar ao início
+  const cadBack = document.getElementById('cadastro-back');
+  if(cadBack) cadBack.addEventListener('click', ()=> showScreen('screen-intro'));
+  const btnBack = document.getElementById('continue-back');
+  if(btnBack) btnBack.addEventListener('click', ()=>{ clearMsg(); showScreen('screen-intro'); });
+
+  // Ir para o cadastro já com o CPF digitado preenchido
+  function irParaCadastro(cpfFmt){
+    showScreen('screen-cadastro');
+    const ci = document.getElementById('input-cpf');
+    if(ci && cpfFmt) ci.value = cpfFmt;
+    setTimeout(()=>{ const n=document.getElementById('input-nome'); if(n) n.focus(); }, 60);
+  }
+
+  // ── Submit do CPF (Já tenho cadastro) ─────────────────────────────────
   const form = document.getElementById('continue-form');
   if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();
     unlockAudio();
     clearMsg();
-    resetCompletedState();
 
-    const nome   = document.getElementById('continue-nome').value.trim();
-    const cpfRaw = document.getElementById('continue-cpf').value.trim();
+    const cpfRaw = cpfInput.value.trim();
     const cpfFmt = cpfRaw;
 
-    if(!nome){ showMsg('Informe seu nome completo.'); document.getElementById('continue-nome').focus(); return; }
     if(!validarCPF(cpfRaw)){
       cpfInput.classList.add('invalid');
       cpfErr.textContent = 'CPF inválido — confira os números.';
@@ -2529,91 +2552,96 @@ async function resumeFromSupabaseRecord(p, cpfFmt){
     }
     cpfInput.classList.remove('invalid'); cpfErr.textContent='';
 
-    // Ação "Refazer do zero": limpa tudo e recomeça atualizando o registro existente.
-    const refazerDoZero = (cad)=>{
-      limparProgresso(cad);
-      showScreen('screen-intro');
-      proceedToStartForceReplay(cad);
-    };
-
     // 1) Checkpoint LOCAL (mesmo aparelho) — retomada exata e completa.
     const local = loadCheckpoint(cpfRaw);
     if(local){
-      if(normNome(local.cadastro && local.cadastro.nome) !== normNome(nome)){
-        showMsg('O nome informado não corresponde ao cadastro deste CPF. Verifique e tente novamente.');
-        return;
-      }
+      const cad = local.cadastro || { nome:'', cpf:cpfFmt, telefone:'', cidade:'' };
       const rodada = ((local.nextBlock||1) + 1);
       showResumeChoice({
-        title:'Jornada encontrada! 🎯',
-        sub:`Você parou na Rodada ${rodada}. Quer continuar de onde parou ou refazer o quiz do zero?`,
+        title:'Bem-vindo de volta! 🎯',
+        sub:`Você parou na Rodada ${rodada}. Quer continuar de onde parou ou reiniciar o quiz do zero (zera sua pontuação)?`,
         primaryLabel:'Continuar de onde parei →',
-        secondaryLabel:'Refazer do zero',
+        secondaryLabel:'Reiniciar Quiz',
         allowDismiss:true,
         onPrimary:  ()=> entrarContinuacao(local),
-        onSecondary:()=> refazerDoZero(local.cadastro || { nome, cpf:cpfFmt, telefone:'', cidade:'' })
+        onSecondary:()=> reiniciarQuiz(cad)
       });
       return;
     }
 
-    // 2) Sem checkpoint local → Supabase (cross-device / outro aparelho).
+    // 2) Sem checkpoint local → consulta Supabase.
     submitBtn.disabled = true;
     const labelOrig = submitBtn.textContent;
-    submitBtn.textContent = 'Procurando sua jornada...';
+    submitBtn.textContent = 'Buscando seu CPF...';
     try{
       const p = await buscarProgressoBloco(cpfRaw);
+
+      // 2a) CPF NÃO existe → oferecer novo cadastro.
       if(!p){
-        showMsg('Não encontramos uma jornada para este CPF. Se você ainda não jogou ou não passou da 1ª rodada, toque em "Voltar" e inicie sua jornada. 🚀');
+        showResumeChoice({
+          title:'CPF não encontrado 🔍',
+          sub:'Não encontramos esse CPF no sistema. Que tal iniciar uma nova jornada e criar seu cadastro?',
+          primaryLabel:'Iniciar nova jornada →',
+          secondaryLabel:'Tentar outro CPF',
+          allowDismiss:true,
+          onPrimary: ()=> irParaCadastro(cpfFmt),
+          onSecondary: ()=>{ cpfInput.focus(); cpfInput.select && cpfInput.select(); }
+        });
         return;
       }
-      if(normNome(p.nome) !== normNome(nome)){
-        showMsg('O nome informado não corresponde ao cadastro deste CPF. Verifique e tente novamente.');
-        return;
-      }
+
+      const cad = { nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' };
+
+      // 2b) Já COMPLETOU → ver certificado ou reiniciar.
       if(p.completou){
         showResumeChoice({
           title:'Você já é um Mestre do Festival! 🏆',
-          sub:'Você já concluiu o quiz com este CPF. Deseja jogar novamente (sua pontuação será zerada) ou ver o seu certificado?',
-          primaryLabel:'Jogar novamente (zerar) →',
-          secondaryLabel:'Ver meu certificado',
+          sub:'Você já concluiu o quiz com este CPF. Deseja ver o seu certificado ou reiniciar o quiz (sua pontuação será zerada)?',
+          primaryLabel:'Ver meu certificado →',
+          secondaryLabel:'Reiniciar Quiz',
           allowDismiss:true,
-          onPrimary: ()=> refazerDoZero({ nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' }),
-          onSecondary: ()=>{ mostrarResultadoDe(p, p.nome, p.cidade, cpfFmt); toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇'); }
+          onPrimary: ()=>{ mostrarResultadoDe(p, p.nome, p.cidade, cpfFmt); toast('Aqui está seu certificado — clique em "Baixar Certificado" 👇'); },
+          onSecondary: ()=> reiniciarQuiz(cad)
         });
         return;
       }
+
       const nextBlock = Number(p.ultimo_bloco)||0;
+
+      // 2c) Existe mas ainda não avançou (sem progresso para continuar).
       if(nextBlock < 1){
         showResumeChoice({
-          title:'Sua jornada ainda não começou 🚀',
-          sub:'Encontramos seu cadastro, mas você ainda não avançou além da 1ª rodada — então não há progresso para continuar. Deseja iniciar sua jornada agora?',
+          title:'Vamos começar sua jornada! 🚀',
+          sub:'Encontramos seu cadastro, mas você ainda não avançou além da 1ª rodada. Deseja iniciar sua jornada agora?',
           primaryLabel:'Iniciar minha jornada →',
-          secondaryLabel:'Voltar ao início',
+          secondaryLabel:'Cancelar',
           allowDismiss:true,
-          onPrimary: ()=> refazerDoZero({ nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' }),
-          onSecondary: ()=>{ clearMsg(); resetCompletedState(); showScreen('screen-intro'); }
+          onPrimary: ()=> reiniciarQuiz(cad),
+          onSecondary: ()=>{}
         });
         return;
       }
+
+      // 2d) Em andamento → continuar de onde parou ou reiniciar.
       const rodada = nextBlock + 1;
       showResumeChoice({
-        title:'Jornada encontrada! 🎯',
-        sub:`Você parou na Rodada ${rodada}. Quer continuar de onde parou ou refazer o quiz do zero?`,
+        title:'Bem-vindo de volta! 🎯',
+        sub:`Você parou na Rodada ${rodada}. Quer continuar de onde parou ou reiniciar o quiz do zero (zera sua pontuação)?`,
         primaryLabel:'Continuar de onde parei →',
-        secondaryLabel:'Refazer do zero',
+        secondaryLabel:'Reiniciar Quiz',
         allowDismiss:true,
         onPrimary: async ()=>{
           const okk = await resumeFromSupabaseRecord(p, cpfFmt);
           if(!okk){ showScreen('screen-continue'); showMsg('Não foi possível retomar agora. Tente novamente.'); }
         },
-        onSecondary:()=> refazerDoZero({ nome:p.nome, cpf:cpfFmt, telefone:'', cidade:p.cidade||'' })
+        onSecondary: ()=> reiniciarQuiz(cad)
       });
     }catch(err){
-      console.error('[Quiz] Erro ao continuar jornada:', err);
-      showMsg('⚠️ Não foi possível verificar sua jornada agora. Tente novamente em instantes.');
+      console.error('[Quiz] Erro ao verificar CPF:', err);
+      showMsg('⚠️ Não foi possível verificar seu CPF agora. Tente novamente em instantes.');
     }finally{
       submitBtn.disabled = false;
-      submitBtn.textContent = labelOrig || 'Continuar de onde parei →';
+      submitBtn.textContent = labelOrig || 'Avançar →';
     }
   });
 
@@ -2713,8 +2741,7 @@ function showAlreadyCompletedModal(participante, cadastro){
     overlay.classList.remove('show');
     btnCert.removeEventListener('click', onCert);
     btnReset.removeEventListener('click', onReset);
-    limparProgresso(cadastro);
-    proceedToStartForceReplay(cadastro);
+    reiniciarQuiz(cadastro);
   };
 
   btnCert.addEventListener('click', onCert, {once:true});
@@ -2792,7 +2819,7 @@ function proceedToStart(cadastro, opts){
             if(localCk){ entrarContinuacao(localCk); }
             else { const okk = await resumeFromSupabaseRecord(supa, cadastro.cpf); if(!okk) toast('Não foi possível retomar agora. Tente novamente.'); }
           },
-          onSecondary: ()=>{ limparProgresso(cadastro); proceedToStartForceReplay(cadastro); }
+          onSecondary: ()=>{ reiniciarQuiz(cadastro); }
         });
       } else {
         // CPF cadastrado, mas sem jornada avançada para continuar.
@@ -2802,7 +2829,7 @@ function proceedToStart(cadastro, opts){
           primaryLabel:'Iniciar minha jornada →',
           secondaryLabel:'Cancelar',
           allowDismiss:true,
-          onPrimary: ()=>{ limparProgresso(cadastro); proceedToStartForceReplay(cadastro); },
+          onPrimary: ()=>{ reiniciarQuiz(cadastro); },
           onSecondary: ()=>{ /* permanece na tela inicial */ }
         });
       }
